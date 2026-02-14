@@ -1,20 +1,13 @@
-# ==============================
-# DAILY AI MARKET BRIEF GENERATOR
-# ==============================
-
 import datetime
+import os
+import requests
 
-# -------- STEP 1: DATE --------
 today = datetime.date.today().strftime("%d %b %Y")
-
-# -------- STEP 2: MARKET DATA (TEMP SAMPLE – WILL BE AUTOMATED NEXT) --------
 market_data = """
 NIFTY 50: -0.9%
 BANK NIFTY: -1.2%
 SENSEX: -0.8%
 """
-
-# -------- STEP 3: VERIFIED NEWS (TEMP SAMPLE – FROM TRUSTED SOURCES) --------
 news_data = """
 1. Reuters: Indian shares fall as global markets weaken ahead of inflation data
    Lead: Indian equities declined modestly as investors turned cautious ahead of key global inflation data, tracking weakness in overseas markets.
@@ -22,8 +15,6 @@ news_data = """
 2. RBI: Central bank commentary on inflation and rates
    Lead: The Reserve Bank of India reiterated its focus on inflation management while maintaining a data-dependent policy stance.
 """
-
-# -------- STEP 4: ANALYST PROMPT (THIS IS THE BRAIN) --------
 prompt = f"""
 You are a professional equity market research analyst.
 
@@ -67,10 +58,29 @@ Rules:
 
 End with a short section titled: "Investor Takeaway".
 """
+def generate_ai_brief(prompt_text):
+    api_url = "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1"
+    headers = {
+        "Authorization": f"Bearer {os.getenv('HF_API_KEY')}"
+    }
 
-# -------- STEP 5: OUTPUT (FOR NOW, JUST PRINT) --------
+    payload = {
+        "inputs": prompt_text,
+        "parameters": {
+            "max_new_tokens": 700,
+            "temperature": 0.3
+        }
+    }
+
+    response = requests.post(api_url, headers=headers, json=payload)
+    response.raise_for_status()
+
+    result = response.json()
+    return result[0]["generated_text"]
+ai_output = generate_ai_brief(prompt)
+
 print("===================================")
-print("DAILY MARKET BRIEF – AI (DRAFT)")
+print("DAILY MARKET BRIEF – AI (FINAL)")
 print("DATE:", today)
 print("===================================")
-print(prompt)
+print(ai_output)

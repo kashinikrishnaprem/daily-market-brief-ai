@@ -58,25 +58,43 @@ Rules:
 
 End with a short section titled: "Investor Takeaway".
 """
+summarization_input = f"""
+Daily Market Brief
+
+Date: {today}
+
+Market Snapshot:
+{market_data}
+
+Key News:
+{news_data}
+
+Write a professional daily market commentary explaining what happened, why it happened, 
+and how long-term investors should interpret it.
+"""
 def generate_ai_brief(prompt_text):
-    api_url = "https://api-inference.huggingface.co/models/google/flan-t5-large"
+    api_url = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
+
     headers = {
         "Authorization": f"Bearer {os.getenv('HF_API_KEY')}"
     }
 
     payload = {
         "inputs": prompt_text,
-       "parameters": {
-    "max_new_tokens": 600
-}
+        "parameters": {
+            "max_length": 600,
+            "min_length": 250,
+            "do_sample": False
+        }
     }
 
     response = requests.post(api_url, headers=headers, json=payload)
     response.raise_for_status()
 
     result = response.json()
-    return result[0]["generated_text"]
-ai_output = generate_ai_brief(prompt)
+    return result[0]["summary_text"]
+
+ai_output = generate_ai_brief(summarization_input)
 
 print("===================================")
 print("DAILY MARKET BRIEF – AI (FINAL)")

@@ -59,17 +59,16 @@ Rules:
 End with a short section titled: "Investor Takeaway".
 """
 def generate_ai_brief(prompt_text):
-    api_url = "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta"
+    api_url = "https://api-inference.huggingface.co/models/google/flan-t5-large"
     headers = {
         "Authorization": f"Bearer {os.getenv('HF_API_KEY')}"
     }
 
     payload = {
         "inputs": prompt_text,
-        "parameters": {
-            "max_new_tokens": 700,
-            "temperature": 0.3
-        }
+       "parameters": {
+    "max_new_tokens": 600
+}
     }
 
     response = requests.post(api_url, headers=headers, json=payload)

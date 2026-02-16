@@ -20,10 +20,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests
+          pip install --upgrade pip
+          pip install openai
 
       - name: Run market brief generator
         env:
-          HF_API_KEY: ${{ secrets.HF_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python generate_daily_brief.py

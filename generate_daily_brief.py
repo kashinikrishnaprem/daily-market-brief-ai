@@ -104,8 +104,17 @@ BRENT CRUDE: {brent_close:.2f} ({brent_pts:+.2f}, {brent_pct:.2f}%)
         return "Global data unavailable."
 # ---------------- FETCH FII / DII DATA (HYBRID SYSTEM) ----------------
 def fetch_fii_dii_data():
-    today_str = datetime.date.today().strftime("%d-%b-%Y")
-    archive_date = datetime.date.today().strftime("%d%m%Y")
+    # ---- Determine last valid trading date ----
+    today = datetime.date.today()
+
+    # If weekend, shift back to Friday
+    if today.weekday() == 5:  # Saturday
+        today = today - datetime.timedelta(days=1)
+    elif today.weekday() == 6:  # Sunday
+        today = today - datetime.timedelta(days=2)
+
+    archive_date = today.strftime("%d%m%Y")
+    today_str = today.strftime("%d-%b-%Y")
 
     # =========================
     # PRIMARY: NSE ARCHIVE CSV
@@ -116,11 +125,9 @@ def fetch_fii_dii_data():
 
         if response.status_code == 200:
             df = pd.read_csv(StringIO(response.text))
-
-            # Look for net total row
             df.columns = [col.strip() for col in df.columns]
 
-            net_row = df[df.iloc[:,0].str.contains("Net", na=False)]
+            net_row = df[df.iloc[:, 0].astype(str).str.contains("Net", na=False)]
 
             if not net_row.empty:
                 fii_net = net_row.iloc[0][1]
@@ -134,7 +141,6 @@ FII Net Flow: ₹{fii_net} crore
 DII Net Flow: ₹{dii_net} crore
 Flow Status: Archive Data
 """
-
     except Exception:
         pass
 
@@ -146,7 +152,7 @@ Flow Status: Archive Data
         headers = {"User-Agent": "Mozilla/5.0"}
         response = requests.get(mc_url, headers=headers, timeout=10)
 
-        tables = pd.read_html(response.text)
+        tables = pd.read_html(StringIO(response.text))
 
         if tables:
             df = tables[0]
@@ -164,7 +170,6 @@ FII Net Flow: ₹{fii_net} crore
 DII Net Flow: ₹{dii_net} crore
 Flow Status: Fallback Source
 """
-
     except Exception:
         pass
 

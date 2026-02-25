@@ -1,3 +1,6 @@
+import requests
+import pandas as pd
+from io import StringIO
 import datetime
 import os
 from openai import OpenAI
@@ -99,27 +102,76 @@ BRENT CRUDE: {brent_close:.2f} ({brent_pts:+.2f}, {brent_pct:.2f}%)
 
     except Exception:
         return "Global data unavailable."
-# ---------------- FETCH FII / DII DATA ----------------
+# ---------------- FETCH FII / DII DATA (HYBRID SYSTEM) ----------------
 def fetch_fii_dii_data():
+    today_str = datetime.date.today().strftime("%d-%b-%Y")
+    archive_date = datetime.date.today().strftime("%d%m%Y")
+
+    # =========================
+    # PRIMARY: NSE ARCHIVE CSV
+    # =========================
     try:
-        import requests
-        import pandas as pd
+        url = f"https://archives.nseindia.com/content/fo/fo_fii_stats_{archive_date}.csv"
+        response = requests.get(url, timeout=10)
 
-        url = "https://www.nseindia.com/api/fiidiiTradeReact"
+        if response.status_code == 200:
+            df = pd.read_csv(StringIO(response.text))
 
-        headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Accept": "application/json"
-        }
+            # Look for net total row
+            df.columns = [col.strip() for col in df.columns]
 
-        session = requests.Session()
-        session.get("https://www.nseindia.com", headers=headers)
-        response = session.get(url, headers=headers, timeout=10)
+            net_row = df[df.iloc[:,0].str.contains("Net", na=False)]
 
-        data = response.json()
+            if not net_row.empty:
+                fii_net = net_row.iloc[0][1]
+                dii_net = net_row.iloc[0][2]
 
-        if not data or "data" not in data:
-            return "FII/DII data unavailable."
+                return f"""
+Flow Date: {today_str}
+Source: NSE Archive
+
+FII Net Flow: ₹{fii_net} crore
+DII Net Flow: ₹{dii_net} crore
+Flow Status: Archive Data
+"""
+
+    except Exception:
+        pass
+
+    # =========================
+    # FALLBACK: MONEYCONTROL
+    # =========================
+    try:
+        mc_url = "https://www.moneycontrol.com/stocks/marketstats/fii_dii_activity/index.php"
+        headers = {"User-Agent": "Mozilla/5.0"}
+        response = requests.get(mc_url, headers=headers, timeout=10)
+
+        tables = pd.read_html(response.text)
+
+        if tables:
+            df = tables[0]
+            latest = df.iloc[0]
+
+            date = latest[0]
+            fii_net = latest[3]
+            dii_net = latest[5]
+
+            return f"""
+Flow Date: {date}
+Source: Moneycontrol
+
+FII Net Flow: ₹{fii_net} crore
+DII Net Flow: ₹{dii_net} crore
+Flow Status: Fallback Source
+"""
+
+    except Exception:
+        pass
+
+    # =========================
+    # FINAL FALLBACK
+    # =========================
+    return "Institutional flow data could not be retrieved from available sources."
 
         latest = data["data"][-1]
         flow_date = latest.get("date", "N/A")
@@ -260,6 +312,9 @@ Do not ignore institutional flow data.
 
 If FII net flow is positive and index is positive, mention alignment.
 If FII net flow is negative while index is positive (or vice versa), highlight divergence.
+
+If institutional flow data contains a Source field, mention the source once in Market Overview.
+If flow data could not be retrieved, clearly state that it was unavailable.
 
 DATE:
 {today}

@@ -19,19 +19,107 @@ def fetch_market_data():
         if len(nifty_hist) < 2 or len(bank_hist) < 2 or len(sensex_hist) < 2:
             return "Market data unavailable."
 
-        nifty_change = ((nifty_hist["Close"].iloc[-1] - nifty_hist["Close"].iloc[-2]) / nifty_hist["Close"].iloc[-2]) * 100
-        bank_change = ((bank_hist["Close"].iloc[-1] - bank_hist["Close"].iloc[-2]) / bank_hist["Close"].iloc[-2]) * 100
-        sensex_change = ((sensex_hist["Close"].iloc[-1] - sensex_hist["Close"].iloc[-2]) / sensex_hist["Close"].iloc[-2]) * 100
+        nifty_close = nifty_hist["Close"].iloc[-1]
+        bank_close = bank_hist["Close"].iloc[-1]
+        sensex_close = sensex_hist["Close"].iloc[-1]
+
+        nifty_prev = nifty_hist["Close"].iloc[-2]
+        bank_prev = bank_hist["Close"].iloc[-2]
+        sensex_prev = sensex_hist["Close"].iloc[-2]
+
+        nifty_points = nifty_close - nifty_prev
+        bank_points = bank_close - bank_prev
+        sensex_points = sensex_close - sensex_prev
+
+        nifty_change = (nifty_points / nifty_prev) * 100
+        bank_change = (bank_points / bank_prev) * 100
+        sensex_change = (sensex_points / sensex_prev) * 100
 
         return f"""
-NIFTY 50: {nifty_change:.2f}%
-BANK NIFTY: {bank_change:.2f}%
-SENSEX: {sensex_change:.2f}%
+NIFTY 50: {nifty_close:.2f} ({nifty_points:+.2f}, {nifty_change:.2f}%)
+BANK NIFTY: {bank_close:.2f} ({bank_points:+.2f}, {bank_change:.2f}%)
+SENSEX: {sensex_close:.2f} ({sensex_points:+.2f}, {sensex_change:.2f}%)
 """
+
     except Exception:
         return "Market data unavailable."
+# ---------------- FETCH GLOBAL MARKET DATA ----------------
+def fetch_global_data():
+    try:
+        sp500 = yf.Ticker("^GSPC")
+        nasdaq = yf.Ticker("^IXIC")
+        dow = yf.Ticker("^DJI")
+        usd_inr = yf.Ticker("INR=X")
+        brent = yf.Ticker("BZ=F")
+
+        sp_hist = sp500.history(period="5d")
+        nas_hist = nasdaq.history(period="5d")
+        dow_hist = dow.history(period="5d")
+        usd_hist = usd_inr.history(period="5d")
+        brent_hist = brent.history(period="5d")
+
+        if any(len(hist) < 2 for hist in [sp_hist, nas_hist, dow_hist, usd_hist, brent_hist]):
+            return "Global data unavailable."
+
+        def calc(hist):
+            close = hist["Close"].iloc[-1]
+            prev = hist["Close"].iloc[-2]
+            points = close - prev
+            pct = (points / prev) * 100
+            return close, points, pct
+
+        sp_close, sp_pts, sp_pct = calc(sp_hist)
+        nas_close, nas_pts, nas_pct = calc(nas_hist)
+        dow_close, dow_pts, dow_pct = calc(dow_hist)
+        usd_close, usd_pts, usd_pct = calc(usd_hist)
+        brent_close, brent_pts, brent_pct = calc(brent_hist)
+
+        return f"""
+S&P 500: {sp_close:.2f} ({sp_pts:+.2f}, {sp_pct:.2f}%)
+NASDAQ: {nas_close:.2f} ({nas_pts:+.2f}, {nas_pct:.2f}%)
+DOW JONES: {dow_close:.2f} ({dow_pts:+.2f}, {dow_pct:.2f}%)
+USD/INR: {usd_close:.2f} ({usd_pts:+.2f}, {usd_pct:.2f}%)
+BRENT CRUDE: {brent_close:.2f} ({brent_pts:+.2f}, {brent_pct:.2f}%)
+"""
+
+    except Exception:
+        return "Global data unavailable."
+# ---------------- FETCH FII / DII DATA ----------------
+def fetch_fii_dii_data():
+    try:
+        import requests
+        import pandas as pd
+
+        url = "https://www.nseindia.com/api/fiidiiTradeReact"
+
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/json"
+        }
+
+        session = requests.Session()
+        session.get("https://www.nseindia.com", headers=headers)
+        response = session.get(url, headers=headers, timeout=10)
+
+        data = response.json()
+
+        if not data or "data" not in data:
+            return "FII/DII data unavailable."
+
+        latest = data["data"][-1]
+
+        fii_net = latest.get("netFII", "N/A")
+        dii_net = latest.get("netDII", "N/A")
+
+        return f"""
+FII Net Flow: ₹{fii_net} crore
+DII Net Flow: ₹{dii_net} crore
+"""
+
+    except Exception:
+        return "FII/DII data unavailable."
 # ---------------- FETCH LIVE NEWS ----------------
-# ---------------- FETCH MULTI-SOURCE NEWS ----------------
+# ---------------- FETCH MULTI-SOURCE NEWS WITH SUMMARIES ----------------
 def fetch_market_news():
     try:
         sources = [
@@ -40,28 +128,43 @@ def fetch_market_news():
             "https://news.google.com/rss/search?q=India+stock+market&hl=en-IN&gl=IN&ceid=IN:en"
         ]
 
-        all_headlines = []
+        all_articles = []
 
         for url in sources:
             feed = feedparser.parse(url)
-            for entry in feed.entries[:5]:
+
+            for entry in feed.entries[:4]:
                 title = entry.title.strip()
-                all_headlines.append(title)
 
-        # Remove duplicates
-        unique_headlines = list(dict.fromkeys(all_headlines))
+                summary = ""
+                if hasattr(entry, "summary"):
+                    summary = entry.summary
+                elif hasattr(entry, "description"):
+                    summary = entry.description
 
-        # Filter India-relevant news
-        keywords = ["India", "RBI", "Nifty", "Sensex", "inflation", "market", "stocks"]
-        filtered = [
-            h for h in unique_headlines
-            if any(keyword.lower() in h.lower() for keyword in keywords)
-        ]
+                import re
+                summary = re.sub('<.*?>', '', summary)
+                summary = summary[:400]
 
-        if not filtered:
-            filtered = unique_headlines[:5]
+                article_block = f"""TITLE: {title}
+SUMMARY: {summary}
+"""
+                all_articles.append(article_block)
 
-        return "\n".join(f"- {h}" for h in filtered[:7])
+        # Deduplicate by title
+        unique_articles = []
+        seen_titles = set()
+
+        for article in all_articles:
+            title_line = article.split("TITLE: ")[1].split("\n")[0]
+            if title_line not in seen_titles:
+                seen_titles.add(title_line)
+                unique_articles.append(article)
+
+        if not unique_articles:
+            return "No relevant market news available."
+
+        return "\n\n".join(unique_articles[:6])
 
     except Exception:
         return "News data unavailable."
@@ -71,7 +174,8 @@ today = datetime.date.today().strftime("%d %b %Y")
 # ---------------- LIVE DATA VARIABLES ----------------
 market_data = fetch_market_data()
 news_data = fetch_market_news()
-
+global_data = fetch_global_data()
+fii_dii_data = fetch_fii_dii_data()
 
 # ---------------- ANALYSIS INPUT ----------------
 analysis_input = f"""
@@ -83,11 +187,26 @@ or assumptions not directly stated in the data provided.
 
 If information is missing, state that clearly instead of inferring.
 
+If referencing global markets, clearly distinguish between correlation and direct causation.
+Do not over-emphasize global cues unless explicitly linked in the provided news summaries.
+
+If FII and DII flows are available, mention whether flows align or diverge from index direction.
+Do not speculate on reasons beyond the provided data.
+
+If global indices and domestic indices move in opposite directions,
+explicitly highlight the divergence without implying causation.
+
 DATE:
 {today}
 
-MARKET DATA:
+DOMESTIC MARKET DATA:
 {market_data}
+
+GLOBAL MARKET CONTEXT:
+{global_data}
+
+INSTITUTIONAL FLOWS:
+{fii_dii_data}
 
 KEY NEWS:
 {news_data}

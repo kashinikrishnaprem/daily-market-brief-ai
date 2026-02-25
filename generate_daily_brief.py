@@ -31,19 +31,37 @@ SENSEX: {sensex_change:.2f}%
     except Exception:
         return "Market data unavailable."
 # ---------------- FETCH LIVE NEWS ----------------
-def fetch_reuters_news():
+# ---------------- FETCH MULTI-SOURCE NEWS ----------------
+def fetch_market_news():
     try:
-        rss_url = "https://feeds.reuters.com/reuters/businessNews"
-        feed = feedparser.parse(rss_url)
+        sources = [
+            "https://finance.yahoo.com/rss/topstories",
+            "https://feeds.reuters.com/reuters/businessNews",
+            "https://news.google.com/rss/search?q=India+stock+market&hl=en-IN&gl=IN&ceid=IN:en"
+        ]
 
-        headlines = []
-        for entry in feed.entries[:5]:
-            headlines.append(f"- {entry.title}")
+        all_headlines = []
 
-        if not headlines:
-            return "No major Reuters business headlines available."
+        for url in sources:
+            feed = feedparser.parse(url)
+            for entry in feed.entries[:5]:
+                title = entry.title.strip()
+                all_headlines.append(title)
 
-        return "\n".join(headlines)
+        # Remove duplicates
+        unique_headlines = list(dict.fromkeys(all_headlines))
+
+        # Filter India-relevant news
+        keywords = ["India", "RBI", "Nifty", "Sensex", "inflation", "market", "stocks"]
+        filtered = [
+            h for h in unique_headlines
+            if any(keyword.lower() in h.lower() for keyword in keywords)
+        ]
+
+        if not filtered:
+            filtered = unique_headlines[:5]
+
+        return "\n".join(f"- {h}" for h in filtered[:7])
 
     except Exception:
         return "News data unavailable."
@@ -52,7 +70,7 @@ today = datetime.date.today().strftime("%d %b %Y")
 
 # ---------------- LIVE DATA VARIABLES ----------------
 market_data = fetch_market_data()
-news_data = fetch_reuters_news()
+news_data = fetch_market_news()
 
 
 # ---------------- ANALYSIS INPUT ----------------

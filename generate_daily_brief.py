@@ -201,6 +201,14 @@ If no explicit linkage exists in the news text, describe global moves as backgro
 
 If domestic index movement is below 0.50%, describe it as marginal or modest and avoid directional adjectives like strong, sharp, or rally.
 
+Institutional flows must be explicitly addressed.
+If FII net flow and index direction align, state alignment.
+If they diverge, explicitly highlight divergence.
+Do not ignore institutional flow data.
+
+If FII net flow is positive and index is positive, mention alignment.
+If FII net flow is negative while index is positive (or vice versa), highlight divergence.
+
 DATE:
 {today}
 

@@ -34,8 +34,23 @@ def fetch_market_data():
         nifty_change = (nifty_points / nifty_prev) * 100
         bank_change = (bank_points / bank_prev) * 100
         sensex_change = (sensex_points / sensex_prev) * 100
+        # ---- Trade Date ----
+        trade_date = nifty_hist.index[-1].strftime("%d %b %Y")
+
+        # ---- Volatility Regime ----
+        max_move = max(abs(nifty_change), abs(bank_change), abs(sensex_change))
+
+        if max_move < 0.50:
+            regime = "Low Volatility Session"
+        elif max_move < 1.00:
+            regime = "Moderate Volatility Session"
+        else:
+            regime = "Elevated Volatility Session"
 
         return f"""
+Trade Date: {trade_date}
+Session Type: {regime}
+
 NIFTY 50: {nifty_close:.2f} ({nifty_points:+.2f}, {nifty_change:.2f}%)
 BANK NIFTY: {bank_close:.2f} ({bank_points:+.2f}, {bank_change:.2f}%)
 SENSEX: {sensex_close:.2f} ({sensex_points:+.2f}, {sensex_change:.2f}%)
@@ -107,13 +122,36 @@ def fetch_fii_dii_data():
             return "FII/DII data unavailable."
 
         latest = data["data"][-1]
+        flow_date = latest.get("date", "N/A")
 
         fii_net = latest.get("netFII", "N/A")
         dii_net = latest.get("netDII", "N/A")
 
+        # ---- Determine FII Direction ----
+        try:
+            fii_numeric = float(str(fii_net).replace(",", ""))
+            if fii_numeric > 0:
+                fii_direction = "Positive"
+            elif fii_numeric < 0:
+                fii_direction = "Negative"
+            else:
+                fii_direction = "Neutral"
+        except:
+            fii_direction = "Unknown"
+
+        # ---- Flow Status ----
+        if fii_direction == "Unknown":
+            flow_status = "Flow data incomplete or unavailable."
+        else:
+            flow_status = "Flow data valid."
+
         return f"""
+Flow Date: {flow_date}
+
 FII Net Flow: ₹{fii_net} crore
 DII Net Flow: ₹{dii_net} crore
+FII Direction: {fii_direction}
+Flow Status: {flow_status}
 """
 
     except Exception:
@@ -179,7 +217,14 @@ fii_dii_data = fetch_fii_dii_data()
 
 # ---------------- ANALYSIS INPUT ----------------
 analysis_input = f"""
+
 You are a calm, data-driven equity market research analyst.
+
+Data hierarchy priority:
+1. Domestic index movement
+2. Institutional flows
+3. Explicitly linked domestic news
+4. Global context (background only unless directly linked)
 
 Using STRICTLY AND ONLY the information explicitly written below,
 do NOT introduce any external facts, numbers, valuations,
@@ -198,6 +243,9 @@ explicitly highlight the divergence without implying causation.
 
 Global market movements must NOT be described as drivers unless the news summaries explicitly link them to Indian markets.
 If no explicit linkage exists in the news text, describe global moves as background context only.
+
+If no domestic news explicitly connects global markets to Indian indices,
+classify global movements strictly as background context.
 
 If domestic index movement is below 0.50%, describe it as marginal or modest and avoid directional adjectives like strong, sharp, or rally.
 

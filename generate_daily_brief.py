@@ -77,7 +77,11 @@ news_data = fetch_market_news()
 analysis_input = f"""
 You are a calm, data-driven equity market research analyst.
 
-Using ONLY the information below, write a ONE-PAGE daily market brief.
+Using STRICTLY AND ONLY the information explicitly written below,
+do NOT introduce any external facts, numbers, valuations,
+or assumptions not directly stated in the data provided.
+
+If information is missing, state that clearly instead of inferring.
 
 DATE:
 {today}

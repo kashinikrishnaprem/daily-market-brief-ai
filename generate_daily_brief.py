@@ -102,81 +102,50 @@ BRENT CRUDE: {brent_close:.2f} ({brent_pts:+.2f}, {brent_pct:.2f}%)
 
     except Exception:
         return "Global data unavailable."
-# ---------------- FETCH FII / DII DATA (HYBRID SYSTEM) ----------------
+# ---------------- FETCH FII / DII DATA (STABLE NSE API) ----------------
 def fetch_fii_dii_data():
-    # ---- Determine last valid trading date ----
-    today = datetime.date.today()
-
-    # If weekend, shift back to Friday
-    if today.weekday() == 5:  # Saturday
-        today = today - datetime.timedelta(days=1)
-    elif today.weekday() == 6:  # Sunday
-        today = today - datetime.timedelta(days=2)
-
-    archive_date = today.strftime("%d%m%Y")
-    today_str = today.strftime("%d-%b-%Y")
-
-    # =========================
-    # PRIMARY: NSE ARCHIVE CSV
-    # =========================
     try:
-        url = f"https://archives.nseindia.com/content/fo/fo_fii_stats_{archive_date}.csv"
-        response = requests.get(url, timeout=10)
+        session = requests.Session()
 
-        if response.status_code == 200:
-            df = pd.read_csv(StringIO(response.text))
-            df.columns = [col.strip() for col in df.columns]
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/json",
+            "Referer": "https://www.nseindia.com/",
+            "Connection": "keep-alive"
+        }
 
-            net_row = df[df.iloc[:, 0].astype(str).str.contains("Net", na=False)]
+        # Step 1: Get cookies
+        session.get("https://www.nseindia.com", headers=headers, timeout=10)
 
-            if not net_row.empty:
-                fii_net = net_row.iloc[0][1]
-                dii_net = net_row.iloc[0][2]
+        # Step 2: Call API
+        url = "https://www.nseindia.com/api/fiidiiTradeReact"
+        response = session.get(url, headers=headers, timeout=10)
 
-                return f"""
-Flow Date: {today_str}
-Source: NSE Archive
+        if response.status_code != 200:
+            return "Institutional flow data unavailable (API blocked)."
+
+        data = response.json()
+
+        if "data" not in data or not data["data"]:
+            return "Institutional flow data unavailable."
+
+        latest = data["data"][-1]
+
+        flow_date = latest.get("date", "N/A")
+        fii_net = latest.get("netFII", "N/A")
+        dii_net = latest.get("netDII", "N/A")
+
+        return f"""
+Flow Date: {flow_date}
+Source: NSE Official API
 
 FII Net Flow: ₹{fii_net} crore
 DII Net Flow: ₹{dii_net} crore
-Flow Status: Archive Data
+Flow Status: Official Data
 """
+
     except Exception:
-        pass
-
-    # =========================
-    # FALLBACK: MONEYCONTROL
-    # =========================
-    try:
-        mc_url = "https://www.moneycontrol.com/stocks/marketstats/fii_dii_activity/index.php"
-        headers = {"User-Agent": "Mozilla/5.0"}
-        response = requests.get(mc_url, headers=headers, timeout=10)
-
-        tables = pd.read_html(StringIO(response.text))
-
-        if tables:
-            df = tables[0]
-            latest = df.iloc[0]
-
-            date = latest[0]
-            fii_net = latest[3]
-            dii_net = latest[5]
-
-            return f"""
-Flow Date: {date}
-Source: Moneycontrol
-
-FII Net Flow: ₹{fii_net} crore
-DII Net Flow: ₹{dii_net} crore
-Flow Status: Fallback Source
-"""
-    except Exception:
-        pass
-
-    # =========================
-    # FINAL FALLBACK
-    # =========================
-    return "Institutional flow data could not be retrieved from available sources."
+        return "Institutional flow data could not be retrieved."
 # ---------------- FETCH LIVE NEWS ----------------
 # ---------------- FETCH MULTI-SOURCE NEWS WITH SUMMARIES ----------------
 def fetch_market_news():

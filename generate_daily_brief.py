@@ -172,42 +172,6 @@ Flow Status: Fallback Source
     # FINAL FALLBACK
     # =========================
     return "Institutional flow data could not be retrieved from available sources."
-
-        latest = data["data"][-1]
-        flow_date = latest.get("date", "N/A")
-
-        fii_net = latest.get("netFII", "N/A")
-        dii_net = latest.get("netDII", "N/A")
-
-        # ---- Determine FII Direction ----
-        try:
-            fii_numeric = float(str(fii_net).replace(",", ""))
-            if fii_numeric > 0:
-                fii_direction = "Positive"
-            elif fii_numeric < 0:
-                fii_direction = "Negative"
-            else:
-                fii_direction = "Neutral"
-        except:
-            fii_direction = "Unknown"
-
-        # ---- Flow Status ----
-        if fii_direction == "Unknown":
-            flow_status = "Flow data incomplete or unavailable."
-        else:
-            flow_status = "Flow data valid."
-
-        return f"""
-Flow Date: {flow_date}
-
-FII Net Flow: ₹{fii_net} crore
-DII Net Flow: ₹{dii_net} crore
-FII Direction: {fii_direction}
-Flow Status: {flow_status}
-"""
-
-    except Exception:
-        return "FII/DII data unavailable."
 # ---------------- FETCH LIVE NEWS ----------------
 # ---------------- FETCH MULTI-SOURCE NEWS WITH SUMMARIES ----------------
 def fetch_market_news():

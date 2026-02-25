@@ -215,6 +215,10 @@ news_data = fetch_market_news()
 global_data = fetch_global_data()
 fii_dii_data = fetch_fii_dii_data()
 
+print("----- DEBUG FLOWS -----")
+print(fii_dii_data)
+print("-----------------------")
+
 # ---------------- ANALYSIS INPUT ----------------
 analysis_input = f"""
 

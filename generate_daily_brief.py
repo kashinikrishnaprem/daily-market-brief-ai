@@ -2,6 +2,7 @@ import datetime
 import os
 from openai import OpenAI
 import yfinance as yf
+import feedparser
 
 # ---------------- FETCH LIVE MARKET DATA ----------------
 def fetch_market_data():
@@ -29,19 +30,30 @@ SENSEX: {sensex_change:.2f}%
 """
     except Exception:
         return "Market data unavailable."
+# ---------------- FETCH LIVE NEWS ----------------
+def fetch_reuters_news():
+    try:
+        rss_url = "https://feeds.reuters.com/reuters/businessNews"
+        feed = feedparser.parse(rss_url)
+
+        headlines = []
+        for entry in feed.entries[:5]:
+            headlines.append(f"- {entry.title}")
+
+        if not headlines:
+            return "No major Reuters business headlines available."
+
+        return "\n".join(headlines)
+
+    except Exception:
+        return "News data unavailable."
 # ---------------- DATE ----------------
 today = datetime.date.today().strftime("%d %b %Y")
 
 # ---------------- LIVE DATA VARIABLES ----------------
 market_data = fetch_market_data()
+news_data = fetch_reuters_news()
 
-news_data = """
-1. Reuters: Indian shares fall as global markets weaken ahead of inflation data
-   Lead: Indian equities declined modestly as investors turned cautious ahead of key global inflation data.
-
-2. RBI: Central bank commentary on inflation and rates
-   Lead: The Reserve Bank of India reiterated its focus on inflation management while maintaining a data-dependent policy stance.
-"""
 
 # ---------------- ANALYSIS INPUT ----------------
 analysis_input = f"""

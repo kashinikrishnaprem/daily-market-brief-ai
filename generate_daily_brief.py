@@ -196,6 +196,11 @@ Do not speculate on reasons beyond the provided data.
 If global indices and domestic indices move in opposite directions,
 explicitly highlight the divergence without implying causation.
 
+Global market movements must NOT be described as drivers unless the news summaries explicitly link them to Indian markets.
+If no explicit linkage exists in the news text, describe global moves as background context only.
+
+If domestic index movement is below 0.50%, describe it as marginal or modest and avoid directional adjectives like strong, sharp, or rally.
+
 DATE:
 {today}
 

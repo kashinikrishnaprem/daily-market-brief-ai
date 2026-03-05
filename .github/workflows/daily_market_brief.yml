@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          ppip install openai yfinance feedparser pandas requests gspread google-auth
+          pip install openai yfinance feedparser pandas requests gspread google-auth
           
       - name: Run market brief generator
         env:

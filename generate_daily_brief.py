@@ -6,6 +6,9 @@ import os
 from openai import OpenAI
 import yfinance as yf
 import feedparser
+import gspread
+import json
+from google.oauth2.service_account import Credentials
 
 # ---------------- FETCH LIVE MARKET DATA ----------------
 def fetch_market_data():
@@ -308,3 +311,32 @@ print("DAILY MARKET BRIEF – AI")
 print("DATE:", today)
 print("===================================")
 print(ai_output)
+def test_google_sheet():
+
+    service_account_info = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT"))
+
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+
+    credentials = Credentials.from_service_account_info(
+        service_account_info,
+        scopes=scopes
+    )
+
+    client = gspread.authorize(credentials)
+
+    spreadsheet = client.open_by_key("1vSuZmhAYVgBhTz4nx9g_fZnmV2ulEUJwisjIWfoQK64")
+
+    sheet = spreadsheet.sheet1
+
+    row = [
+        "TEST DATE",
+        "TEST MARKET",
+        "TEST GLOBAL",
+        "TEST FLOWS",
+        "TEST NEWS",
+        "TEST AI"
+    ]
+
+    sheet.append_row(row)
+
+    print("Google Sheet connection successful.")

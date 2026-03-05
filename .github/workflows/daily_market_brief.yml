@@ -21,8 +21,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install openai yfinance feedparser pandas
-
+          ppip install openai yfinance feedparser pandas requests gspread google-auth
+          
       - name: Run market brief generator
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

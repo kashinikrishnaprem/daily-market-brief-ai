@@ -302,35 +302,7 @@ def generate_ai_brief(text):
         max_tokens=650
     )
     return response.choices[0].message.content
-
-# ---------------- WRITE TO GOOGLE SHEETS ----------------
-
-def update_google_sheet(date, market_data, global_data, flows, news, brief):
-
-    creds_json = os.getenv("GOOGLE_SERVICE_ACCOUNT")
-
-if not creds_json:
-    raise Exception("GOOGLE_SERVICE_ACCOUNT secret not found.")
-
-creds_dict = json.loads(creds_json)
-    scopes = [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive"
-    ]
-
-    creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
-    client = gspread.authorize(creds)
-
-    sheet = client.open_by_key("1vSuZmhAYVgBhTz4nx9g_fZnmV2ulEUJwisjIWfoQK64").sheet1
-
-    sheet.append_row([
-        date,
-        market_data,
-        global_data,
-        flows,
-        news,
-        brief
-    ]) 
+    
 # ---------------- RUN AI ANALYSIS ----------------
 
 ai_output = generate_ai_brief(analysis_input)
@@ -342,6 +314,33 @@ print("===================================")
 print(ai_output)
 
 # ---------------- WRITE TO GOOGLE SHEETS ----------------
+def update_google_sheet(date, market_data, global_data, flows, news, brief):
+
+    creds_json = os.getenv("GOOGLE_SERVICE_ACCOUNT")
+
+    if not creds_json:
+        raise Exception("GOOGLE_SERVICE_ACCOUNT secret not found.")
+
+    creds_dict = json.loads(creds_json)
+
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+
+    client = gspread.authorize(creds)
+
+    sheet = client.open_by_key("1vSuZmhAYVgBhTz4nx9g_fZnmV2ulEUJwisjIWfoQK64").sheet1
+
+    sheet.append_row(
+        [date, market_data, global_data, flows, news, brief],
+        value_input_option="RAW"
+    )
+
+
+# ---------------- EXECUTE GOOGLE SHEET UPDATE ----------------
 
 update_google_sheet(
     today,
@@ -351,4 +350,3 @@ update_google_sheet(
     news_data,
     ai_output
 )
-    

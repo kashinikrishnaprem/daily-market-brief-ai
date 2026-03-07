@@ -26,5 +26,6 @@ jobs:
       - name: Run market brief generator
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
         run: |
           python generate_daily_brief.py

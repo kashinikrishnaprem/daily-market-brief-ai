@@ -303,7 +303,36 @@ def generate_ai_brief(text):
     )
     return response.choices[0].message.content
 
-# ---------------- RUN ONCE ----------------
+# ---------------- WRITE TO GOOGLE SHEETS ----------------
+
+def update_google_sheet(date, market_data, global_data, flows, news, brief):
+
+    creds_json = os.getenv("GOOGLE_SERVICE_ACCOUNT")
+
+if not creds_json:
+    raise Exception("GOOGLE_SERVICE_ACCOUNT secret not found.")
+
+creds_dict = json.loads(creds_json)
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+    client = gspread.authorize(creds)
+
+    sheet = client.open_by_key("1vSuZmhAYVgBhTz4nx9g_fZnmV2ulEUJwisjIWfoQK64").sheet1
+
+    sheet.append_row([
+        date,
+        market_data,
+        global_data,
+        flows,
+        news,
+        brief
+    ]) 
+# ---------------- RUN AI ANALYSIS ----------------
+
 ai_output = generate_ai_brief(analysis_input)
 
 print("===================================")
@@ -311,32 +340,15 @@ print("DAILY MARKET BRIEF – AI")
 print("DATE:", today)
 print("===================================")
 print(ai_output)
-def test_google_sheet():
 
-    service_account_info = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT"))
+# ---------------- WRITE TO GOOGLE SHEETS ----------------
 
-    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-
-    credentials = Credentials.from_service_account_info(
-        service_account_info,
-        scopes=scopes
-    )
-
-    client = gspread.authorize(credentials)
-
-    spreadsheet = client.open_by_key("1vSuZmhAYVgBhTz4nx9g_fZnmV2ulEUJwisjIWfoQK64")
-
-    sheet = spreadsheet.sheet1
-
-    row = [
-        "TEST DATE",
-        "TEST MARKET",
-        "TEST GLOBAL",
-        "TEST FLOWS",
-        "TEST NEWS",
-        "TEST AI"
-    ]
-
-    sheet.append_row(row)
-
-    print("Google Sheet connection successful.")
+update_google_sheet(
+    today,
+    market_data,
+    global_data,
+    fii_dii_data,
+    news_data,
+    ai_output
+)
+    

@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 from newspaper import Article
 import requests
 import pandas as pd
@@ -154,45 +155,40 @@ BRENT CRUDE: {brent_close:.2f} ({brent_pts:+.2f}, {brent_pct:.2f}%)
     except Exception:
         return "Global data unavailable."
 # ---------------- FETCH FII / DII DATA (STABLE NSE API) ----------------
+
 def fetch_fii_dii_data():
 
     try:
 
-        session = requests.Session()
+        url = "https://www.moneycontrol.com/stocks/marketstats/fii_dii_activity/index.php"
 
-        headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Accept": "application/json",
-            "Referer": "https://www.nseindia.com/",
-            "Connection": "keep-alive"
-        }
+        headers = {"User-Agent": "Mozilla/5.0"}
 
-        # Step 1: Visit NSE homepage to obtain cookies
-        session.get("https://www.nseindia.com", headers=headers, timeout=10)
+        res = requests.get(url, headers=headers)
 
-        # Step 2: Call FII/DII API
-        url = "https://www.nseindia.com/api/fiidiiTradeReact"
-        response = session.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(res.text, "html.parser")
 
-        data = response.json()
+        table = soup.find("table")
 
-        latest = data["data"][-1]
+        rows = table.find_all("tr")
 
-        date = latest["date"]
-        fii = latest["netFII"]
-        dii = latest["netDII"]
+        latest = rows[1].find_all("td")
+
+        date = latest[0].text.strip()
+        fii = latest[1].text.strip()
+        dii = latest[2].text.strip()
 
         return f"""
-Flow Date: {date}
+Source: Moneycontrol
 
+Date: {date}
 FII Net Flow: ₹{fii} crore
 DII Net Flow: ₹{dii} crore
 """
 
-    except Exception as e:
+    except Exception:
 
-        return "FII/DII data unavailable"
+        return "FII/DII data unavailable."
 # ---------------- FETCH LIVE NEWS ----------------
 
 def extract_article_text(url):

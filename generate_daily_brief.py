@@ -291,6 +291,8 @@ Use the information below but you may **interpret relationships between market d
 
 Avoid generic statements. Focus on **drivers and context**.
 
+If FII/DII flows are not available, explicitly state that they were not reported and avoid inferring institutional behaviour.
+
 DATE:
 {today}
 

@@ -21,7 +21,7 @@ def fetch_market_news():
 
         all_articles = []
 
-        for url in sources:
+    for url in sources:
     feed = feedparser.parse(url)
 
     for entry in feed.entries[:6]:
@@ -157,65 +157,64 @@ Flow Status: Official Data
         return "Institutional flow data could not be retrieved."
 
 # ---------------- FETCH LIVE NEWS ----------------
-# ---------------- FETCH MULTI-SOURCE NEWS WITH SUMMARIES ----------------
+
 def extract_article_text(url):
     try:
         article = Article(url)
         article.download()
         article.parse()
-
-        text = article.text
-        return text[:3000]   # limit size so AI cost stays low
-
-    except Exception:
+        return article.text[:3000]   # limit size
+    except:
         return ""
+
+
 def fetch_market_news():
     try:
         sources = [
-    "https://news.google.com/rss/search?q=Nifty+Sensex+India+stock+market&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://news.google.com/rss/search?q=RBI+India+economy+markets&hl=en-IN&gl=IN&ceid=IN:en"
-]
+            "https://news.google.com/rss/search?q=Nifty+Sensex+India+stock+market&hl=en-IN&gl=IN&ceid=IN:en",
+            "https://news.google.com/rss/search?q=RBI+India+economy+markets&hl=en-IN&gl=IN&ceid=IN:en"
+        ]
 
         all_articles = []
 
         for url in sources:
             feed = feedparser.parse(url)
 
-        for entry in feed.entries[:6]:
+            for entry in feed.entries[:6]:
 
-    title = entry.title.strip()
-    link = entry.link
+                title = entry.title.strip()
+                link = entry.link
 
-    article_text = extract_article_text(link)
+                article_text = extract_article_text(link)
 
-    # fallback if scraping fails
-    if not article_text:
-        if hasattr(entry, "summary"):
-            article_text = entry.summary
-        elif hasattr(entry, "description"):
-            article_text = entry.description
-        else:
-            article_text = ""
+                # fallback if scraping fails
+                if not article_text:
+                    if hasattr(entry, "summary"):
+                        article_text = entry.summary
+                    elif hasattr(entry, "description"):
+                        article_text = entry.description
+                    else:
+                        article_text = ""
 
-    import re
-    article_text = re.sub('<.*?>', '', article_text)
+                import re
+                article_text = re.sub('<.*?>', '', article_text)
 
-    article_block = f"""
+                article_block = f"""
 TITLE: {title}
 
 ARTICLE:
 {article_text}
 """
 
-    all_articles.append(article_block)
-                
+                all_articles.append(article_block)
 
-        # Deduplicate by title
+        # remove duplicates
         unique_articles = []
         seen_titles = set()
 
         for article in all_articles:
             title_line = article.split("TITLE: ")[1].split("\n")[0]
+
             if title_line not in seen_titles:
                 seen_titles.add(title_line)
                 unique_articles.append(article)

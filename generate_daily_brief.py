@@ -160,9 +160,11 @@ def fetch_fii_dii_data():
 
     try:
 
-        url = "https://www.moneycontrol.com/stocks/marketstats/fii_dii_activity/index.php"
+        url = "https://trendlyne.com/equity/fii-dii-data/"
 
-        headers = {"User-Agent": "Mozilla/5.0"}
+        headers = {
+            "User-Agent": "Mozilla/5.0"
+        }
 
         res = requests.get(url, headers=headers)
 
@@ -179,11 +181,11 @@ def fetch_fii_dii_data():
         dii = latest[2].text.strip()
 
         return f"""
-Source: Moneycontrol
+Source: Trendlyne
 
 Date: {date}
-FII Net Flow: ₹{fii} crore
-DII Net Flow: ₹{dii} crore
+FII Net Flow: {fii}
+DII Net Flow: {dii}
 """
 
     except Exception:

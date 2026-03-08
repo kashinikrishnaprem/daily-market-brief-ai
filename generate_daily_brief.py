@@ -176,25 +176,33 @@ def fetch_market_news():
         for url in sources:
             feed = feedparser.parse(url)
 
-            for entry in feed.entries[:6]:
-                title = entry.title.strip()
+        for entry in feed.entries[:6]:
 
-link = entry.link
-article_text = extract_article_text(link)
+    title = entry.title.strip()
+    link = entry.link
 
-# fallback if scraping fails
-if not article_text:
-    article_text = entry.summary if hasattr(entry, "summary") else ""
+    article_text = extract_article_text(link)
 
-import re
-article_text = re.sub('<.*?>', '', article_text)
+    # fallback if scraping fails
+    if not article_text:
+        if hasattr(entry, "summary"):
+            article_text = entry.summary
+        elif hasattr(entry, "description"):
+            article_text = entry.description
+        else:
+            article_text = ""
 
-article_block = f"""
+    import re
+    article_text = re.sub('<.*?>', '', article_text)
+
+    article_block = f"""
 TITLE: {title}
 
 ARTICLE:
 {article_text}
 """
+
+    all_articles.append(article_block)
                 
 
         # Deduplicate by title

@@ -160,37 +160,30 @@ def fetch_fii_dii_data():
 
     try:
 
-        url = "https://trendlyne.com/equity/fii-dii-data/"
+        api_key = os.getenv("ALPHAVANTAGE_API_KEY")
 
-        headers = {
-            "User-Agent": "Mozilla/5.0"
-        }
+        url = f"https://www.alphavantage.co/query?function=INSTITUTIONAL_HOLDINGS&symbol=NIFTY&apikey={api_key}"
 
-        res = requests.get(url, headers=headers)
+        response = requests.get(url)
+        data = response.json()
 
-        soup = BeautifulSoup(res.text, "html.parser")
+        if "data" not in data:
+            return "Institutional flow data unavailable."
 
-        table = soup.find("table")
+        latest = data["data"][0]
 
-        rows = table.find_all("tr")
-
-        latest = rows[1].find_all("td")
-
-        date = latest[0].text.strip()
-        fii = latest[1].text.strip()
-        dii = latest[2].text.strip()
+        fii = latest.get("foreignInstitutionalInvestors", "N/A")
+        dii = latest.get("domesticInstitutionalInvestors", "N/A")
 
         return f"""
-Source: Trendlyne
+Source: Alpha Vantage
 
-Date: {date}
-FII Net Flow: {fii}
-DII Net Flow: {dii}
+FII Net Flow: ₹{fii} crore
+DII Net Flow: ₹{dii} crore
 """
 
     except Exception:
-
-        return "FII/DII data unavailable."
+        return "Institutional flow data unavailable."
 # ---------------- FETCH LIVE NEWS ----------------
 
 def extract_article_text(url):

@@ -12,59 +12,64 @@ import json
 from google.oauth2.service_account import Credentials
 
 # ---------------- FETCH LIVE MARKET DATA ----------------
-def fetch_market_data():
+def fetch_market_news():
     try:
-        nifty = yf.Ticker("^NSEI")
-        banknifty = yf.Ticker("^NSEBANK")
-        sensex = yf.Ticker("^BSESN")
+        sources = [
+            "https://news.google.com/rss/search?q=Nifty+Sensex+India+stock+market&hl=en-IN&gl=IN&ceid=IN:en",
+            "https://news.google.com/rss/search?q=RBI+India+economy+markets&hl=en-IN&gl=IN&ceid=IN:en"
+        ]
 
-        nifty_hist = nifty.history(period="5d")
-        bank_hist = banknifty.history(period="5d")
-        sensex_hist = sensex.history(period="5d")
+        all_articles = []
 
-        # 🔒 LENGTH CHECK (CRITICAL FOR STABILITY)
-        if len(nifty_hist) < 2 or len(bank_hist) < 2 or len(sensex_hist) < 2:
-            return "Market data unavailable."
+        for url in sources:
+            feed = feedparser.parse(url)
 
-        nifty_close = nifty_hist["Close"].iloc[-1]
-        bank_close = bank_hist["Close"].iloc[-1]
-        sensex_close = sensex_hist["Close"].iloc[-1]
+            for entry in feed.entries[:6]:
 
-        nifty_prev = nifty_hist["Close"].iloc[-2]
-        bank_prev = bank_hist["Close"].iloc[-2]
-        sensex_prev = sensex_hist["Close"].iloc[-2]
+                title = entry.title.strip()
+                link = entry.link
 
-        nifty_points = nifty_close - nifty_prev
-        bank_points = bank_close - bank_prev
-        sensex_points = sensex_close - sensex_prev
+                article_text = extract_article_text(link)
 
-        nifty_change = (nifty_points / nifty_prev) * 100
-        bank_change = (bank_points / bank_prev) * 100
-        sensex_change = (sensex_points / sensex_prev) * 100
-        # ---- Trade Date ----
-        trade_date = nifty_hist.index[-1].strftime("%d %b %Y")
+                # fallback if scraping fails
+                if not article_text:
+                    if hasattr(entry, "summary"):
+                        article_text = entry.summary
+                    elif hasattr(entry, "description"):
+                        article_text = entry.description
+                    else:
+                        article_text = ""
 
-        # ---- Volatility Regime ----
-        max_move = max(abs(nifty_change), abs(bank_change), abs(sensex_change))
+                import re
+                article_text = re.sub('<.*?>', '', article_text)
 
-        if max_move < 0.50:
-            regime = "Low Volatility Session"
-        elif max_move < 1.00:
-            regime = "Moderate Volatility Session"
-        else:
-            regime = "Elevated Volatility Session"
+                article_block = f"""
+TITLE: {title}
 
-        return f"""
-Trade Date: {trade_date}
-Session Type: {regime}
-
-NIFTY 50: {nifty_close:.2f} ({nifty_points:+.2f}, {nifty_change:.2f}%)
-BANK NIFTY: {bank_close:.2f} ({bank_points:+.2f}, {bank_change:.2f}%)
-SENSEX: {sensex_close:.2f} ({sensex_points:+.2f}, {sensex_change:.2f}%)
+ARTICLE:
+{article_text}
 """
 
+                all_articles.append(article_block)
+
+        # remove duplicates
+        unique_articles = []
+        seen_titles = set()
+
+        for article in all_articles:
+            title_line = article.split("TITLE: ")[1].split("\n")[0]
+
+            if title_line not in seen_titles:
+                seen_titles.add(title_line)
+                unique_articles.append(article)
+
+        if not unique_articles:
+            return "No relevant market news available."
+
+        return "\n\n".join(unique_articles[:6])
+
     except Exception:
-        return "Market data unavailable."
+        return "News data unavailable."
 # ---------------- FETCH GLOBAL MARKET DATA ----------------
 def fetch_global_data():
     try:
@@ -289,37 +294,6 @@ Style guidelines:
 • Be analytical but concise  
 • Do NOT give predictions or buy/sell calls  
 • Use clear financial language  
-"""
-
-DATE:
-{today}
-
-DOMESTIC MARKET DATA:
-{market_data}
-
-GLOBAL MARKET CONTEXT:
-{global_data}
-
-INSTITUTIONAL FLOWS:
-{fii_dii_data}
-
-KEY NEWS:
-{news_data}
-
-Structure your response as:
-
-1. Market Overview
-2. Key Drivers
-3. Nature of the Move (sentiment / data / policy driven)
-4. Investor Interpretation
-
-Rules:
-- No predictions
-- No buy/sell calls
-- Moderate tone
-- Let data override dramatic headlines
-
-End with a short section titled: "Investor Takeaway".
 """
 
 # ---------------- OPENAI CLIENT ----------------

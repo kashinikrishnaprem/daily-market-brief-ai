@@ -16,9 +16,9 @@ from google.oauth2.service_account import Credentials
 def fetch_market_news():
     try:
         sources = [
-            "https://news.google.com/rss/search?q=Nifty+Sensex+India+stock+market&hl=en-IN&gl=IN&ceid=IN:en",
-            "https://news.google.com/rss/search?q=RBI+India+economy+markets&hl=en-IN&gl=IN&ceid=IN:en"
-        ]
+"https://news.google.com/rss/search?q=Sensex+Nifty+FII+DII+market+close&hl=en-IN&gl=IN&ceid=IN:en",
+"https://news.google.com/rss/search?q=foreign+institutional+investors+India+stock+market&hl=en-IN&gl=IN&ceid=IN:en"
+]
 
         all_articles = []
 
@@ -268,7 +268,7 @@ today = datetime.date.today().strftime("%d %b %Y")
 market_data = fetch_market_data()
 news_data = fetch_market_news()
 global_data = fetch_global_data()
-fii_dii_data = fetch_fii_dii_data()
+fii_dii_data = extract_fii_dii_from_news(news_data)
 
 print("----- DEBUG FLOWS -----")
 print(fii_dii_data)
@@ -332,7 +332,45 @@ Style guidelines:
 
 # ---------------- OPENAI CLIENT ----------------
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+def extract_fii_dii_from_news(news_text):
 
+    try:
+
+        prompt = f"""
+From the following financial news text extract institutional flows.
+
+Identify:
+- FII net flow
+- DII net flow
+
+Return only this format:
+
+FII Net Flow: ₹____ crore
+DII Net Flow: ₹____ crore
+
+If flows are not mentioned return:
+
+FII Net Flow: Not reported
+DII Net Flow: Not reported
+
+NEWS TEXT:
+{news_text}
+"""
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You extract financial data from financial news."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0,
+            max_tokens=120
+        )
+
+        return response.choices[0].message.content
+
+    except Exception:
+        return "FII Net Flow: Not reported\nDII Net Flow: Not reported"
 def generate_ai_brief(text):
     response = client.chat.completions.create(
         model="gpt-4o-mini",

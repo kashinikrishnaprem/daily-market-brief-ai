@@ -1,3 +1,4 @@
+from newspaper import Article
 import requests
 import pandas as pd
 from io import StringIO
@@ -149,38 +150,52 @@ Flow Status: Official Data
 
     except Exception:
         return "Institutional flow data could not be retrieved."
+
 # ---------------- FETCH LIVE NEWS ----------------
 # ---------------- FETCH MULTI-SOURCE NEWS WITH SUMMARIES ----------------
+def extract_article_text(url):
+    try:
+        article = Article(url)
+        article.download()
+        article.parse()
+
+        text = article.text
+        return text[:3000]   # limit size so AI cost stays low
+
+    except Exception:
+        return ""
 def fetch_market_news():
     try:
         sources = [
-            "https://finance.yahoo.com/rss/topstories",
-            "https://feeds.reuters.com/reuters/businessNews",
-            "https://news.google.com/rss/search?q=India+stock+market&hl=en-IN&gl=IN&ceid=IN:en"
-        ]
+    "https://news.google.com/rss/search?q=Nifty+Sensex+India+stock+market&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://news.google.com/rss/search?q=RBI+India+economy+markets&hl=en-IN&gl=IN&ceid=IN:en"
+]
 
         all_articles = []
 
         for url in sources:
             feed = feedparser.parse(url)
 
-            for entry in feed.entries[:4]:
+            for entry in feed.entries[:6]:
                 title = entry.title.strip()
 
-                summary = ""
-                if hasattr(entry, "summary"):
-                    summary = entry.summary
-                elif hasattr(entry, "description"):
-                    summary = entry.description
+link = entry.link
+article_text = extract_article_text(link)
 
-                import re
-                summary = re.sub('<.*?>', '', summary)
-                summary = summary[:400]
+# fallback if scraping fails
+if not article_text:
+    article_text = entry.summary if hasattr(entry, "summary") else ""
 
-                article_block = f"""TITLE: {title}
-SUMMARY: {summary}
+import re
+article_text = re.sub('<.*?>', '', article_text)
+
+article_block = f"""
+TITLE: {title}
+
+ARTICLE:
+{article_text}
 """
-                all_articles.append(article_block)
+                
 
         # Deduplicate by title
         unique_articles = []
@@ -214,48 +229,59 @@ print("-----------------------")
 
 # ---------------- ANALYSIS INPUT ----------------
 analysis_input = f"""
+You are a professional equity market strategist writing a concise daily market brief.
 
-You are a calm, data-driven equity market research analyst.
+Your goal is to explain **what happened, why it happened, and what investors should understand**.
 
-Data hierarchy priority:
-1. Domestic index movement
-2. Institutional flows
-3. Explicitly linked domestic news
-4. Global context (background only unless directly linked)
+Use the information below but you may **interpret relationships between market data and news logically**.
 
-Using STRICTLY AND ONLY the information explicitly written below,
-do NOT introduce any external facts, numbers, valuations,
-or assumptions not directly stated in the data provided.
+Avoid generic statements. Focus on **drivers and context**.
 
-If information is missing, state that clearly instead of inferring.
+DATE:
+{today}
 
-If referencing global markets, clearly distinguish between correlation and direct causation.
-Do not over-emphasize global cues unless explicitly linked in the provided news summaries.
+DOMESTIC MARKET DATA:
+{market_data}
 
-If FII and DII flows are available, mention whether flows align or diverge from index direction.
-Do not speculate on reasons beyond the provided data.
+GLOBAL MARKET DATA:
+{global_data}
 
-If global indices and domestic indices move in opposite directions,
-explicitly highlight the divergence without implying causation.
+INSTITUTIONAL FLOWS:
+{fii_dii_data}
 
-Global market movements must NOT be described as drivers unless the news summaries explicitly link them to Indian markets.
-If no explicit linkage exists in the news text, describe global moves as background context only.
+MARKET NEWS (full articles):
+{news_data}
 
-If no domestic news explicitly connects global markets to Indian indices,
-classify global movements strictly as background context.
 
-If domestic index movement is below 0.50%, describe it as marginal or modest and avoid directional adjectives like strong, sharp, or rally.
+Write a professional research-style brief using this structure:
 
-Institutional flows must be explicitly addressed.
-If FII net flow and index direction align, state alignment.
-If they diverge, explicitly highlight divergence.
-Do not ignore institutional flow data.
+MARKET OVERVIEW
+Summarize the overall session in India. Mention index performance and volatility.
 
-If FII net flow is positive and index is positive, mention alignment.
-If FII net flow is negative while index is positive (or vice versa), highlight divergence.
+KEY CATALYSTS
+Identify the most likely drivers based on the news and data provided.
 
-If institutional flow data contains a Source field, mention the source once in Market Overview.
-If flow data could not be retrieved, clearly state that it was unavailable.
+SECTOR / MARKET IMPACT
+Explain which parts of the market appear most affected.
+
+GLOBAL CONTEXT
+Explain whether global markets may have influenced sentiment.
+
+INSTITUTIONAL FLOWS
+Explain how FII/DII flows align or diverge with the market move.
+
+INVESTOR TAKEAWAY
+Give a short interpretation of what the session signals for investors.
+
+
+Style guidelines:
+
+• Write like a professional research desk note  
+• Avoid generic commentary  
+• Be analytical but concise  
+• Do NOT give predictions or buy/sell calls  
+• Use clear financial language  
+"""
 
 DATE:
 {today}

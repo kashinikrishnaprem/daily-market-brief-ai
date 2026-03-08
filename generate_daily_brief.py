@@ -1,8 +1,6 @@
 from bs4 import BeautifulSoup
 from newspaper import Article
 import requests
-import pandas as pd
-from io import StringIO
 import datetime
 import os
 from openai import OpenAI
@@ -10,67 +8,11 @@ import yfinance as yf
 import feedparser
 import gspread
 import json
+import re
 from google.oauth2.service_account import Credentials
 
-# ---------------- FETCH LIVE MARKET DATA ----------------
-def fetch_market_news():
-    try:
-        sources = [
-"https://news.google.com/rss/search?q=Sensex+Nifty+FII+DII+market+close&hl=en-IN&gl=IN&ceid=IN:en",
-"https://news.google.com/rss/search?q=foreign+institutional+investors+India+stock+market&hl=en-IN&gl=IN&ceid=IN:en"
-]
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-        all_articles = []
-
-        for url in sources:
-            feed = feedparser.parse(url)
-
-            for entry in feed.entries[:6]:
-
-                title = entry.title.strip()
-                link = entry.link
-
-                article_text = extract_article_text(link)
-
-                # fallback if scraping fails
-                if not article_text:
-                    if hasattr(entry, "summary"):
-                        article_text = entry.summary
-                    elif hasattr(entry, "description"):
-                        article_text = entry.description
-                    else:
-                        article_text = ""
-
-                import re
-                article_text = re.sub('<.*?>', '', article_text)
-
-                article_block = f"""
-TITLE: {title}
-
-ARTICLE:
-{article_text}
-"""
-
-                all_articles.append(article_block)
-
-        # remove duplicates
-        unique_articles = []
-        seen_titles = set()
-
-        for article in all_articles:
-            title_line = article.split("TITLE: ")[1].split("\n")[0]
-
-            if title_line not in seen_titles:
-                seen_titles.add(title_line)
-                unique_articles.append(article)
-
-        if not unique_articles:
-            return "No relevant market news available."
-
-        return "\n\n".join(unique_articles[:6])
-
-    except Exception:
-        return "News data unavailable."
 # ---------------- FETCH LIVE MARKET DATA ----------------
 def fetch_market_data():
     try:
@@ -102,9 +44,17 @@ def fetch_market_data():
         sensex_change = (sensex_points / sensex_prev) * 100
 
         trade_date = nifty_hist.index[-1].strftime("%d %b %Y")
+        max_move = max(abs(nifty_change), abs(bank_change), abs(sensex_change))
 
+        if max_move < 0.5:
+           regime = "Low Volatility Session"
+        elif max_move < 1:
+           regime = "Moderate Volatility Session"
+        else:
+           regime = "High Volatility Session"
         return f"""
 Trade Date: {trade_date}
+Session Type: {regime}
 
 NIFTY 50: {nifty_close:.2f} ({nifty_points:+.2f}, {nifty_change:.2f}%)
 BANK NIFTY: {bank_close:.2f} ({bank_points:+.2f}, {bank_change:.2f}%)
@@ -166,16 +116,22 @@ def fetch_fii_dii_data():
             "User-Agent": "Mozilla/5.0"
         }
 
-        res = requests.get(url, headers=headers)
+        res = requests.get(url, headers=headers, timeout=10)
+        res.raise_for_status()
 
         soup = BeautifulSoup(res.text, "html.parser")
 
         table = soup.find("table")
 
+        if not table:
+          return "FII/DII data unavailable."
+
         rows = table.find_all("tr")
 
-        latest = rows[1].find_all("td")
+        if len(rows) < 2:
+            return "FII/DII data unavailable."
 
+        latest = rows[1].find_all("td")
         date = latest[0].text.strip()
         fii = latest[1].text.strip()
         dii = latest[2].text.strip()
@@ -198,8 +154,18 @@ def extract_article_text(url):
         article = Article(url)
         article.download()
         article.parse()
-        return article.text[:3000]   # limit size
-    except:
+
+        text = article.text
+
+        # fallback if newspaper fails
+        if not text:
+            r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+            soup = BeautifulSoup(r.text, "html.parser")
+            text = soup.get_text()
+
+        return text[:3000]
+
+    except Exception:
         return ""
 
 
@@ -231,7 +197,6 @@ def fetch_market_news():
                     else:
                         article_text = ""
 
-                import re
                 article_text = re.sub('<.*?>', '', article_text)
 
                 article_block = f"""
@@ -263,12 +228,54 @@ ARTICLE:
         return "News data unavailable."
 # ---------------- DATE ----------------
 today = datetime.date.today().strftime("%d %b %Y")
+def extract_fii_dii_from_news(news_text):
 
+    try:
+
+        prompt = f"""
+From the following financial news text extract institutional flows.
+
+Identify:
+- FII net flow
+- DII net flow
+
+Return only this format:
+
+FII Net Flow: ₹____ crore
+DII Net Flow: ₹____ crore
+
+If flows are not mentioned return:
+
+FII Net Flow: Not reported
+DII Net Flow: Not reported
+
+NEWS TEXT:
+{news_text}
+"""
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You extract financial data from financial news."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0,
+            max_tokens=120
+        )
+
+        return response.choices[0].message.content
+
+    except Exception:
+
+        return "FII Net Flow: Not reported\nDII Net Flow: Not reported"
 # ---------------- LIVE DATA VARIABLES ----------------
 market_data = fetch_market_data()
 news_data = fetch_market_news()
 global_data = fetch_global_data()
-fii_dii_data = extract_fii_dii_from_news(news_data)
+fii_dii_data = fetch_fii_dii_data()
+
+if "unavailable" in fii_dii_data.lower():
+    fii_dii_data = extract_fii_dii_from_news(news_data)
 
 print("----- DEBUG FLOWS -----")
 print(fii_dii_data)
@@ -330,47 +337,6 @@ Style guidelines:
 • Use clear financial language  
 """
 
-# ---------------- OPENAI CLIENT ----------------
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-def extract_fii_dii_from_news(news_text):
-
-    try:
-
-        prompt = f"""
-From the following financial news text extract institutional flows.
-
-Identify:
-- FII net flow
-- DII net flow
-
-Return only this format:
-
-FII Net Flow: ₹____ crore
-DII Net Flow: ₹____ crore
-
-If flows are not mentioned return:
-
-FII Net Flow: Not reported
-DII Net Flow: Not reported
-
-NEWS TEXT:
-{news_text}
-"""
-
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You extract financial data from financial news."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0,
-            max_tokens=120
-        )
-
-        return response.choices[0].message.content
-
-    except Exception:
-        return "FII Net Flow: Not reported\nDII Net Flow: Not reported"
 def generate_ai_brief(text):
     response = client.chat.completions.create(
         model="gpt-4o-mini",

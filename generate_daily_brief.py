@@ -21,36 +21,36 @@ def fetch_market_news():
 
         all_articles = []
 
-    for url in sources:
-    feed = feedparser.parse(url)
+        for url in sources:
+            feed = feedparser.parse(url)
 
-    for entry in feed.entries[:6]:
+            for entry in feed.entries[:6]:
 
-        title = entry.title.strip()
-        link = entry.link
+                title = entry.title.strip()
+                link = entry.link
 
-        article_text = extract_article_text(link)
+                article_text = extract_article_text(link)
 
-        # fallback if scraping fails
-        if not article_text:
-            if hasattr(entry, "summary"):
-                article_text = entry.summary
-            elif hasattr(entry, "description"):
-                article_text = entry.description
-            else:
-                article_text = ""
+                # fallback if scraping fails
+                if not article_text:
+                    if hasattr(entry, "summary"):
+                        article_text = entry.summary
+                    elif hasattr(entry, "description"):
+                        article_text = entry.description
+                    else:
+                        article_text = ""
 
-        import re
-        article_text = re.sub('<.*?>', '', article_text)
+                import re
+                article_text = re.sub('<.*?>', '', article_text)
 
-        article_block = f"""
+                article_block = f"""
 TITLE: {title}
 
 ARTICLE:
 {article_text}
 """
 
-        all_articles.append(article_block)
+                all_articles.append(article_block)
 
         # remove duplicates
         unique_articles = []

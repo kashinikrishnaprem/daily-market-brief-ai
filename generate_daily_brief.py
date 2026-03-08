@@ -155,49 +155,44 @@ BRENT CRUDE: {brent_close:.2f} ({brent_pts:+.2f}, {brent_pct:.2f}%)
         return "Global data unavailable."
 # ---------------- FETCH FII / DII DATA (STABLE NSE API) ----------------
 def fetch_fii_dii_data():
+
     try:
+
         session = requests.Session()
 
         headers = {
             "User-Agent": "Mozilla/5.0",
+            "Accept-Language": "en-US,en;q=0.9",
             "Accept": "application/json",
             "Referer": "https://www.nseindia.com/",
             "Connection": "keep-alive"
         }
 
-        # Step 1: Get cookies
+        # Step 1: Visit NSE homepage to obtain cookies
         session.get("https://www.nseindia.com", headers=headers, timeout=10)
 
-        # Step 2: Call API
+        # Step 2: Call FII/DII API
         url = "https://www.nseindia.com/api/fiidiiTradeReact"
         response = session.get(url, headers=headers, timeout=10)
 
-        if response.status_code != 200:
-            return "Institutional flow data unavailable (API blocked)."
-
         data = response.json()
-
-        if "data" not in data or not data["data"]:
-            return "Institutional flow data unavailable."
 
         latest = data["data"][-1]
 
-        flow_date = latest.get("date", "N/A")
-        fii_net = latest.get("netFII", "N/A")
-        dii_net = latest.get("netDII", "N/A")
+        date = latest["date"]
+        fii = latest["netFII"]
+        dii = latest["netDII"]
 
         return f"""
-Flow Date: {flow_date}
-Source: NSE Official API
+Flow Date: {date}
 
-FII Net Flow: ₹{fii_net} crore
-DII Net Flow: ₹{dii_net} crore
-Flow Status: Official Data
+FII Net Flow: ₹{fii} crore
+DII Net Flow: ₹{dii} crore
 """
 
-    except Exception:
-        return "Institutional flow data could not be retrieved."
+    except Exception as e:
 
+        return "FII/DII data unavailable"
 # ---------------- FETCH LIVE NEWS ----------------
 
 def extract_article_text(url):

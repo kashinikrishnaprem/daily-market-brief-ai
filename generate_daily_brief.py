@@ -70,6 +70,48 @@ ARTICLE:
 
     except Exception:
         return "News data unavailable."
+# ---------------- FETCH LIVE MARKET DATA ----------------
+def fetch_market_data():
+    try:
+        nifty = yf.Ticker("^NSEI")
+        banknifty = yf.Ticker("^NSEBANK")
+        sensex = yf.Ticker("^BSESN")
+
+        nifty_hist = nifty.history(period="5d")
+        bank_hist = banknifty.history(period="5d")
+        sensex_hist = sensex.history(period="5d")
+
+        if len(nifty_hist) < 2 or len(bank_hist) < 2 or len(sensex_hist) < 2:
+            return "Market data unavailable."
+
+        nifty_close = nifty_hist["Close"].iloc[-1]
+        bank_close = bank_hist["Close"].iloc[-1]
+        sensex_close = sensex_hist["Close"].iloc[-1]
+
+        nifty_prev = nifty_hist["Close"].iloc[-2]
+        bank_prev = bank_hist["Close"].iloc[-2]
+        sensex_prev = sensex_hist["Close"].iloc[-2]
+
+        nifty_points = nifty_close - nifty_prev
+        bank_points = bank_close - bank_prev
+        sensex_points = sensex_close - sensex_prev
+
+        nifty_change = (nifty_points / nifty_prev) * 100
+        bank_change = (bank_points / bank_prev) * 100
+        sensex_change = (sensex_points / sensex_prev) * 100
+
+        trade_date = nifty_hist.index[-1].strftime("%d %b %Y")
+
+        return f"""
+Trade Date: {trade_date}
+
+NIFTY 50: {nifty_close:.2f} ({nifty_points:+.2f}, {nifty_change:.2f}%)
+BANK NIFTY: {bank_close:.2f} ({bank_points:+.2f}, {bank_change:.2f}%)
+SENSEX: {sensex_close:.2f} ({sensex_points:+.2f}, {sensex_change:.2f}%)
+"""
+
+    except Exception:
+        return "Market data unavailable."
 # ---------------- FETCH GLOBAL MARKET DATA ----------------
 def fetch_global_data():
     try:

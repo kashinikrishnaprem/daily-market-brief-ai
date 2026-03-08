@@ -160,46 +160,37 @@ def fetch_fii_dii_data():
 
     try:
 
-        session = requests.Session()
+        url = "https://trendlyne.com/equity/fii-dii-data/"
 
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-            "Accept": "application/json, text/plain, */*",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Referer": "https://www.nseindia.com/",
-            "Connection": "keep-alive"
+            "User-Agent": "Mozilla/5.0"
         }
 
-        # Step 1 — Get cookies
-        session.get("https://www.nseindia.com", headers=headers, timeout=10)
+        res = requests.get(url, headers=headers)
 
-        # Step 2 — Call API
-        url = "https://www.nseindia.com/api/fiidiiTradeReact"
+        soup = BeautifulSoup(res.text, "html.parser")
 
-        response = session.get(url, headers=headers, timeout=10)
+        table = soup.find("table")
 
-        if response.status_code != 200:
-            return "Institutional flow data unavailable."
+        rows = table.find_all("tr")
 
-        data = response.json()
+        latest = rows[1].find_all("td")
 
-        latest = data["data"][-1]
-
-        date = latest["date"]
-        fii = latest["netFII"]
-        dii = latest["netDII"]
+        date = latest[0].text.strip()
+        fii = latest[1].text.strip()
+        dii = latest[2].text.strip()
 
         return f"""
-Source: NSE Official
+Source: Trendlyne
 
 Date: {date}
-FII Net Flow: ₹{fii} crore
-DII Net Flow: ₹{dii} crore
+FII Net Flow: {fii}
+DII Net Flow: {dii}
 """
 
     except Exception:
 
-        return "Institutional flow data unavailable."
+        return "FII/DII data unavailable."
 # ---------------- FETCH LIVE NEWS ----------------
 
 def extract_article_text(url):

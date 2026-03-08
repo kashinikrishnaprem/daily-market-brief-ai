@@ -160,29 +160,45 @@ def fetch_fii_dii_data():
 
     try:
 
-        api_key = os.getenv("ALPHAVANTAGE_API_KEY")
+        session = requests.Session()
 
-        url = f"https://www.alphavantage.co/query?function=INSTITUTIONAL_HOLDINGS&symbol=NIFTY&apikey={api_key}"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://www.nseindia.com/",
+            "Connection": "keep-alive"
+        }
 
-        response = requests.get(url)
-        data = response.json()
+        # Step 1 — Get cookies
+        session.get("https://www.nseindia.com", headers=headers, timeout=10)
 
-        if "data" not in data:
+        # Step 2 — Call API
+        url = "https://www.nseindia.com/api/fiidiiTradeReact"
+
+        response = session.get(url, headers=headers, timeout=10)
+
+        if response.status_code != 200:
             return "Institutional flow data unavailable."
 
-        latest = data["data"][0]
+        data = response.json()
 
-        fii = latest.get("foreignInstitutionalInvestors", "N/A")
-        dii = latest.get("domesticInstitutionalInvestors", "N/A")
+        latest = data["data"][-1]
+
+        date = latest["date"]
+        fii = latest["netFII"]
+        dii = latest["netDII"]
 
         return f"""
-Source: Alpha Vantage
+Source: NSE Official
 
+Date: {date}
 FII Net Flow: ₹{fii} crore
 DII Net Flow: ₹{dii} crore
 """
 
     except Exception:
+
         return "Institutional flow data unavailable."
 # ---------------- FETCH LIVE NEWS ----------------
 

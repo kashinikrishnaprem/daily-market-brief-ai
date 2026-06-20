@@ -140,7 +140,7 @@ def fetch_fii_dii_data():
 
         return "Debug Complete"
 
-    except Exception as e:
+except Exception as e:
 
     print("================================")
     print("FII/DII ERROR")

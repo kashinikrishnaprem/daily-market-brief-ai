@@ -1,4 +1,4 @@
-fimport pandas as pd
+import pandas as pd
 from io import StringIO
 from bs4 import BeautifulSoup
 from newspaper import Article

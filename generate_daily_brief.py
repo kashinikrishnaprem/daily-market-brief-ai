@@ -1,4 +1,4 @@
-import pandas as pd
+fimport pandas as pd
 from io import StringIO
 from bs4 import BeautifulSoup
 from newspaper import Article
@@ -73,14 +73,32 @@ def fetch_global_data():
         dow = yf.Ticker("^DJI")
         usd_inr = yf.Ticker("INR=X")
         brent = yf.Ticker("BZ=F")
+        india_vix = yf.Ticker("^INDIAVIX")
+        gold = yf.Ticker("GC=F")
+        silver = yf.Ticker("SI=F")
+        gsec = yf.Ticker("^TNX")
 
         sp_hist = sp500.history(period="5d")
         nas_hist = nasdaq.history(period="5d")
         dow_hist = dow.history(period="5d")
         usd_hist = usd_inr.history(period="5d")
         brent_hist = brent.history(period="5d")
+        vix_hist = india_vix.history(period="5d")
+        gold_hist = gold.history(period="5d")
+        silver_hist = silver.history(period="5d")
+        gsec_hist = gsec.history(period="5d")
 
-        if any(len(hist) < 2 for hist in [sp_hist, nas_hist, dow_hist, usd_hist, brent_hist]):
+        if any(len(hist) < 2 for hist in [
+            sp_hist,
+            nas_hist,
+            dow_hist,
+            usd_hist,
+            brent_hist,
+            vix_hist,
+            gold_hist,
+            silver_hist,
+            gsec_hist
+         ]):
             return "Global data unavailable."
 
         def calc(hist):
@@ -95,6 +113,10 @@ def fetch_global_data():
         dow_close, dow_pts, dow_pct = calc(dow_hist)
         usd_close, usd_pts, usd_pct = calc(usd_hist)
         brent_close, brent_pts, brent_pct = calc(brent_hist)
+        vix_close, vix_pts, vix_pct = calc(vix_hist)
+        gold_close, gold_pts, gold_pct = calc(gold_hist)
+        silver_close, silver_pts, silver_pct = calc(silver_hist)
+        gsec_close, gsec_pts, gsec_pct = calc(gsec_hist)
 
         return f"""
 S&P 500: {sp_close:.2f} ({sp_pts:+.2f}, {sp_pct:.2f}%)
@@ -102,8 +124,11 @@ NASDAQ: {nas_close:.2f} ({nas_pts:+.2f}, {nas_pct:.2f}%)
 DOW JONES: {dow_close:.2f} ({dow_pts:+.2f}, {dow_pct:.2f}%)
 USD/INR: {usd_close:.2f} ({usd_pts:+.2f}, {usd_pct:.2f}%)
 BRENT CRUDE: {brent_close:.2f} ({brent_pts:+.2f}, {brent_pct:.2f}%)
+INDIA VIX: {vix_close:.2f} ({vix_pts:+.2f}, {vix_pct:.2f}%)
+10Y G-SEC YIELD: {gsec_close:.2f} ({gsec_pts:+.2f}, {gsec_pct:.2f}%)
+GOLD: {gold_close:.2f} ({gold_pts:+.2f}, {gold_pct:.2f}%)
+SILVER: {silver_close:.2f} ({silver_pts:+.2f}, {silver_pct:.2f}%)
 """
-
     except Exception:
         return "Global data unavailable."
 # ---------------- FETCH FII / DII DATA FROM NSE ----------------
@@ -296,6 +321,11 @@ NEWS TEXT:
 market_data = fetch_market_data()
 news_data = fetch_market_news()
 global_data = fetch_global_data()
+
+print("----- GLOBAL DATA -----")
+print(global_data)
+print("-----------------------")
+
 fii_dii_data = fetch_fii_dii_data()
 
 if "unavailable" in fii_dii_data.lower():
@@ -309,7 +339,6 @@ DII Net Flow: Not Available
 print("----- DEBUG FLOWS -----")
 print(fii_dii_data)
 print("-----------------------")
-
 # ---------------- ANALYSIS INPUT ----------------
 analysis_input = f"""
 You are a professional equity market strategist writing a concise daily market brief.

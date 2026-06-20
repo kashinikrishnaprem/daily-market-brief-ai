@@ -142,9 +142,17 @@ def fetch_fii_dii_data():
 
     except Exception as e:
 
-        print("FII/DII Error:", str(e))
+    print("================================")
+    print("FII/DII ERROR")
+    print(str(e))
+    print("================================")
 
-        return "FII/DII data unavailable."
+    return f"""
+Source: NSE
+
+ERROR:
+{str(e)}
+"""
 # ---------------- FETCH LIVE NEWS ----------------
 
 def extract_article_text(url):

@@ -132,14 +132,28 @@ def fetch_fii_dii_data():
 
         response.raise_for_status()
 
-        df = pd.read_csv(StringIO(response.text))
+        lines = response.text.splitlines()
 
-        dii_row = df.iloc[0]
-        fii_row = df.iloc[1]
+        dii_line = None
+        fii_line = None
 
-        date = dii_row.iloc[1]
-        dii_net = dii_row.iloc[4]
-        fii_net = fii_row.iloc[4]
+        for line in lines:
+
+            if '"DII"' in line:
+                dii_line = line
+
+            if '"FII/FPI"' in line:
+                fii_line = line
+
+        if not dii_line or not fii_line:
+            raise Exception("Could not locate DII/FII rows")
+
+        dii_parts = [x.strip('"') for x in dii_line.split('","')]
+        fii_parts = [x.strip('"') for x in fii_line.split('","')]
+
+        date = fii_parts[1]
+        dii_net = dii_parts[4]
+        fii_net = fii_parts[4]
 
         return f"""
 Source: NSE

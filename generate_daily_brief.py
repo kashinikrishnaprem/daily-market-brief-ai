@@ -119,7 +119,6 @@ def fetch_fii_dii_data():
             "Referer": "https://www.nseindia.com/reports/fii-dii"
         }
 
-        # Get NSE cookies
         session.get(
             "https://www.nseindia.com",
             headers=headers,
@@ -136,11 +135,23 @@ def fetch_fii_dii_data():
 
         response.raise_for_status()
 
-        print("===== NSE CSV =====")
-        print(response.text[:1000])
-        print("===================")
+        df = pd.read_csv(StringIO(response.text))
 
-        return response.text
+        dii_row = df[df.iloc[:,0] == "DII"].iloc[0]
+        fii_row = df[df.iloc[:,0] == "FII/FPI"].iloc[0]
+
+        date = fii_row.iloc[1]
+
+        fii_net = fii_row.iloc[4]
+        dii_net = dii_row.iloc[4]
+
+        return f"""
+Source: NSE
+
+Date: {date}
+FII Net Flow: ₹{fii_net} Cr
+DII Net Flow: ₹{dii_net} Cr
+"""
 
     except Exception as e:
 
@@ -275,7 +286,12 @@ global_data = fetch_global_data()
 fii_dii_data = fetch_fii_dii_data()
 
 if "unavailable" in fii_dii_data.lower():
-    fii_dii_data = extract_fii_dii_from_news(news_data)
+    fii_dii_data = """
+Source: NSE
+
+FII Net Flow: Not Available
+DII Net Flow: Not Available
+"""
 
 print("----- DEBUG FLOWS -----")
 print(fii_dii_data)

@@ -107,7 +107,6 @@ BRENT CRUDE: {brent_close:.2f} ({brent_pts:+.2f}, {brent_pct:.2f}%)
     except Exception:
         return "Global data unavailable."
 # ---------------- FETCH FII / DII DATA FROM NSE ----------------
-
 def fetch_fii_dii_data():
 
     try:
@@ -125,37 +124,25 @@ def fetch_fii_dii_data():
             timeout=10
         )
 
-        url = "https://www.nseindia.com/api/fiidiiTradeNse?csv=true"
-
         response = session.get(
-            url,
+            "https://www.nseindia.com/api/fiidiiTradeNse?csv=true",
             headers=headers,
             timeout=10
         )
 
-        response.raise_for_status()
-
         df = pd.read_csv(StringIO(response.text))
 
-        dii_row = df[df.iloc[:,0] == "DII"].iloc[0]
-        fii_row = df[df.iloc[:,0] == "FII/FPI"].iloc[0]
+        print("COLUMNS:")
+        print(df.columns.tolist())
 
-        date = fii_row.iloc[1]
+        print("DATA:")
+        print(df.head())
 
-        fii_net = fii_row.iloc[4]
-        dii_net = dii_row.iloc[4]
-
-        return f"""
-Source: NSE
-
-Date: {date}
-FII Net Flow: ₹{fii_net} Cr
-DII Net Flow: ₹{dii_net} Cr
-"""
+        return "Debug Complete"
 
     except Exception as e:
 
-        print("FII/DII Error:", e)
+        print("FII/DII Error:", str(e))
 
         return "FII/DII data unavailable."
 # ---------------- FETCH LIVE NEWS ----------------

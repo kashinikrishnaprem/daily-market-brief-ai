@@ -130,24 +130,28 @@ def fetch_fii_dii_data():
             timeout=10
         )
 
+        response.raise_for_status()
+
         df = pd.read_csv(StringIO(response.text))
 
-        print("COLUMNS:")
-        print(df.columns.tolist())
+        dii_row = df.iloc[0]
+        fii_row = df.iloc[1]
 
-        print("DATA:")
-        print(df.head())
+        date = dii_row.iloc[1]
+        dii_net = dii_row.iloc[4]
+        fii_net = fii_row.iloc[4]
 
-        return "Debug Complete"
+        return f"""
+Source: NSE
 
-except Exception as e:
+Date: {date}
+FII Net Flow: ₹{fii_net} Cr
+DII Net Flow: ₹{dii_net} Cr
+"""
 
-    print("================================")
-    print("FII/DII ERROR")
-    print(str(e))
-    print("================================")
+    except Exception as e:
 
-    return f"""
+        return f"""
 Source: NSE
 
 ERROR:

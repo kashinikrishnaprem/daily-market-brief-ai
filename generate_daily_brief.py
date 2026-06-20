@@ -1,3 +1,5 @@
+import pandas as pd
+from io import StringIO
 from bs4 import BeautifulSoup
 from newspaper import Article
 import requests
@@ -104,47 +106,45 @@ BRENT CRUDE: {brent_close:.2f} ({brent_pts:+.2f}, {brent_pct:.2f}%)
 
     except Exception:
         return "Global data unavailable."
-# ---------------- FETCH FII / DII DATA (STABLE NSE API) ----------------
+# ---------------- FETCH FII / DII DATA FROM NSE ----------------
 
 def fetch_fii_dii_data():
 
     try:
 
-        url = "https://trendlyne.com/equity/fii-dii-data/"
+        session = requests.Session()
 
         headers = {
-            "User-Agent": "Mozilla/5.0"
+            "User-Agent": "Mozilla/5.0",
+            "Referer": "https://www.nseindia.com/reports/fii-dii"
         }
 
-        res = requests.get(url, headers=headers, timeout=10)
-        res.raise_for_status()
+        # Get NSE cookies
+        session.get(
+            "https://www.nseindia.com",
+            headers=headers,
+            timeout=10
+        )
 
-        soup = BeautifulSoup(res.text, "html.parser")
+        url = "https://www.nseindia.com/api/fiidiiTradeNse?csv=true"
 
-        table = soup.find("table")
+        response = session.get(
+            url,
+            headers=headers,
+            timeout=10
+        )
 
-        if not table:
-          return "FII/DII data unavailable."
+        response.raise_for_status()
 
-        rows = table.find_all("tr")
+        print("===== NSE CSV =====")
+        print(response.text[:1000])
+        print("===================")
 
-        if len(rows) < 2:
-            return "FII/DII data unavailable."
+        return response.text
 
-        latest = rows[1].find_all("td")
-        date = latest[0].text.strip()
-        fii = latest[1].text.strip()
-        dii = latest[2].text.strip()
+    except Exception as e:
 
-        return f"""
-Source: Trendlyne
-
-Date: {date}
-FII Net Flow: {fii}
-DII Net Flow: {dii}
-"""
-
-    except Exception:
+        print("FII/DII Error:", e)
 
         return "FII/DII data unavailable."
 # ---------------- FETCH LIVE NEWS ----------------

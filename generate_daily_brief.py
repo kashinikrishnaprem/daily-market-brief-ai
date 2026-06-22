@@ -215,6 +215,28 @@ def fetch_market_news():
         ]
 
         all_articles = []
+        market_keywords = [
+        "nifty",
+        "sensex",
+        "market",
+        "stock",
+        "stocks",
+        "equity",
+        "fii",
+        "dii",
+        "rbi",
+        "inflation",
+        "interest rate",
+        "interest rates",
+        "fed",
+        "crude",
+        "oil",
+        "rupee",
+        "economy",
+        "gdp",
+        "earnings",
+        "sebi"
+]
 
         for url in sources:
             feed = feedparser.parse(url)
@@ -250,7 +272,14 @@ ARTICLE:
 {article_text}
 """
 
-                all_articles.append(article_block)
+                combined_text = (title + " " + article_text).lower()
+
+                if any(keyword in combined_text for keyword in market_keywords):
+
+                    print("KEPT ARTICLE:", title)
+
+                    all_articles.append(article_block)
+
 
         # remove duplicates
         unique_articles = []
@@ -339,7 +368,25 @@ def get_recent_market_history():
 
         rows = sheet.get_all_values()
 
-        history = rows[-5:]
+        # Remove duplicate dates
+        unique_rows = []
+        seen_dates = set()
+
+        for row in reversed(rows):
+
+            if len(row) == 0:
+                continue
+
+            date_value = row[0]
+
+            if date_value not in seen_dates:
+                unique_rows.append(row)
+                seen_dates.add(date_value)
+
+            if len(unique_rows) == 5:
+                break
+
+        history = list(reversed(unique_rows))
 
         output = []
 
@@ -539,17 +586,57 @@ def update_google_sheet(date, market_data, global_data, flows, news, brief):
         "https://www.googleapis.com/auth/drive"
     ]
 
-    creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+    creds = Credentials.from_service_account_info(
+        creds_dict,
+        scopes=scopes
+    )
 
     client = gspread.authorize(creds)
 
-    sheet = client.open_by_key("1vSuZmhAYVgBhTz4nx9g_fZnmV2ulEUJwisjIWfoQK64").sheet1
+    sheet = client.open_by_key(
+        "1vSuZmhAYVgBhTz4nx9g_fZnmV2ulEUJwisjIWfoQK64"
+    ).sheet1
 
-    sheet.append_row(
-        [date, market_data, global_data, flows, news, brief],
-        value_input_option="RAW"
-    )
+    # Check whether today's date already exists
 
+    all_rows = sheet.get_all_values()
+
+    row_to_update = None
+
+    for idx, row in enumerate(all_rows, start=1):
+
+        if len(row) > 0 and row[0] == date:
+            row_to_update = idx
+            break
+
+    print("Existing Row:", row_to_update)
+
+    new_data = [
+        date,
+        market_data,
+        global_data,
+        flows,
+        news,
+        brief
+    ]
+
+    if row_to_update:
+
+        sheet.update(
+            f"A{row_to_update}:F{row_to_update}",
+            [new_data]
+        )
+
+        print(f"Updated existing row for {date}")
+
+    else:
+
+        sheet.append_row(
+            new_data,
+            value_input_option="RAW"
+        )
+
+        print(f"Added new row for {date}")
 
 # ---------------- EXECUTE GOOGLE SHEET UPDATE ----------------
 

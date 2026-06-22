@@ -366,8 +366,30 @@ Identify the most likely drivers based on the news and data provided.
 SECTOR / MARKET IMPACT
 Explain which parts of the market appear most affected.
 
-GLOBAL CONTEXT
-Explain whether global markets may have influenced sentiment.
+GLOBAL CONTEXT & RISK INDICATORS
+
+Discuss the following indicators and what they imply:
+
+• S&P 500
+• NASDAQ
+• DOW JONES
+• USD/INR
+• Brent Crude
+• India VIX
+• US 10Y Treasury Yield
+• Gold
+• Silver
+
+Explain what they suggest about:
+
+- Global risk appetite
+- Market volatility
+- Inflation expectations
+- Safe-haven demand
+- Investor positioning
+
+Do not merely repeat the numbers.
+Interpret their significance.
 
 INSTITUTIONAL FLOWS
 Explain how FII/DII flows align or diverge with the market move.
@@ -378,11 +400,28 @@ Give a short interpretation of what the session signals for investors.
 
 Style guidelines:
 
-• Write like a professional research desk note  
-• Avoid generic commentary  
-• Be analytical but concise  
-• Do NOT give predictions or buy/sell calls  
-• Use clear financial language  
+
+• Write like a professional research desk note
+• Avoid generic commentary
+• Be analytical but concise
+• Do NOT give predictions or buy/sell calls
+• Use clear financial language
+
+• When India VIX is available:
+  Explain whether volatility expectations are rising or falling.
+
+• When US 10Y Treasury Yield is available:
+  Explain what it may indicate about global interest-rate expectations and liquidity conditions.
+
+• When Gold and Silver are available:
+  Discuss whether price action suggests risk-on or risk-off sentiment.
+
+• When Brent Crude is available:
+  Explain the implications for India as a major oil importer.
+
+• Distinguish facts from interpretations.
+
+• Do not attribute market movements to a single headline unless strongly supported by market data. 
 """
 
 def generate_ai_brief(text):

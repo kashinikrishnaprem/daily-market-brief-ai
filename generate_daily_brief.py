@@ -218,24 +218,19 @@ def fetch_market_news():
         market_keywords = [
         "nifty",
         "sensex",
-        "market",
-        "stock",
-        "stocks",
-        "equity",
         "fii",
         "dii",
         "rbi",
         "inflation",
-        "interest rate",
-        "interest rates",
         "fed",
         "crude",
         "oil",
         "rupee",
         "economy",
         "gdp",
-        "earnings",
-        "sebi"
+        "sebi",
+        "treasury yield",
+        "bond yield"
 ]
 
         for url in sources:

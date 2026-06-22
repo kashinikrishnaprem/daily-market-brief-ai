@@ -467,6 +467,26 @@ MARKET NEWS (full articles):
 {news_data}
 
 Write a professional research-style brief using this structure:
+MARKET ANALYSIS RULES
+
+When identifying catalysts, use the following priority:
+
+1. Market price action
+2. FII/DII flows
+3. India VIX
+4. Crude oil
+5. USD/INR
+6. Bond yields
+7. Historical trend data
+8. News articles
+
+Do not assume a news article caused market movement.
+
+News should only be cited as a catalyst if there is a clear and direct connection between the observed market behaviour.
+
+If market data and news conflict, prioritise market data.
+
+Institutional flows, volatility indicators, crude oil and currency movements should generally be given more weight than individual corporate or regulatory news items.
 
 MARKET OVERVIEW
 Summarize the overall session in India. Mention index performance and volatility.
@@ -498,6 +518,8 @@ Explain what they suggest about:
 - Inflation expectations
 - Safe-haven demand
 - Investor positioning
+
+Explain how VIX, crude oil, USD/INR, bond yields, gold and silver influence risk sentiment.
 
 Do not merely repeat the numbers.
 Interpret their significance.

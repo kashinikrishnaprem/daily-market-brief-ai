@@ -209,8 +209,9 @@ def extract_article_text(url):
 def fetch_market_news():
     try:
         sources = [
-            "https://news.google.com/rss/search?q=Nifty+Sensex+India+stock+market&hl=en-IN&gl=IN&ceid=IN:en",
-            "https://news.google.com/rss/search?q=RBI+India+economy+markets&hl=en-IN&gl=IN&ceid=IN:en"
+            "https://www.thehindubusinessline.com/markets/feeder/default.rss",
+            "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms",
+            "https://www.moneycontrol.com/rss/business.xml"
         ]
 
         all_articles = []
@@ -222,8 +223,14 @@ def fetch_market_news():
 
                 title = entry.title.strip()
                 link = entry.link
+                
+                print("TITLE:", title)
+                print("LINK:", link)
 
                 article_text = extract_article_text(link)
+
+                print("ARTICLE LENGTH:", len(article_text))
+                print("==========================")
 
                 # fallback if scraping fails
                 if not article_text:

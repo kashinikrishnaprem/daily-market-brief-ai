@@ -312,10 +312,70 @@ NEWS TEXT:
     except Exception:
 
         return "FII Net Flow: Not reported\nDII Net Flow: Not reported"
+
+# ---------------- HISTORICAL DATA ----------------
+def get_recent_market_history():
+
+    try:
+
+        creds_json = os.getenv("GOOGLE_SERVICE_ACCOUNT")
+        creds_dict = json.loads(creds_json)
+
+        scopes = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive"
+        ]
+
+        creds = Credentials.from_service_account_info(
+            creds_dict,
+            scopes=scopes
+        )
+
+        client = gspread.authorize(creds)
+
+        sheet = client.open_by_key(
+            "1vSuZmhAYVgBhTz4nx9g_fZnmV2ulEUJwisjIWfoQK64"
+        ).sheet1
+
+        rows = sheet.get_all_values()
+
+        history = rows[-5:]
+
+        output = []
+
+        for row in history:
+
+            output.append(
+                f"""
+DATE: {row[0]}
+
+MARKET:
+{row[1]}
+
+GLOBAL:
+{row[2]}
+
+FLOWS:
+{row[3]}
+"""
+            )
+
+        return "\n\n".join(output)
+
+    except Exception as e:
+
+        return f"Historical data unavailable: {str(e)}"
+        
 # ---------------- LIVE DATA VARIABLES ----------------
 market_data = fetch_market_data()
 news_data = fetch_market_news()
 global_data = fetch_global_data()
+
+historical_data = get_recent_market_history()
+
+print("----- HISTORICAL DATA -----")
+print(historical_data)
+print("---------------------------")
 
 print("----- GLOBAL DATA -----")
 print(global_data)
@@ -355,12 +415,14 @@ DOMESTIC MARKET DATA:
 GLOBAL MARKET DATA:
 {global_data}
 
+RECENT MARKET HISTORY:
+{historical_data}
+
 INSTITUTIONAL FLOWS:
 {fii_dii_data}
 
 MARKET NEWS (full articles):
 {news_data}
-
 
 Write a professional research-style brief using this structure:
 
@@ -402,7 +464,16 @@ INSTITUTIONAL FLOWS
 Explain how FII/DII flows align or diverge with the market move.
 
 INVESTOR TAKEAWAY
-Give a short interpretation of what the session signals for investors.
+Compare today's session with the recent market history.
+
+Discuss:
+
+• Whether today's move is part of an ongoing trend
+• Whether institutional behaviour is changing
+• Whether volatility is rising or falling
+• Whether risk appetite is improving or deteriorating
+
+Avoid discussing today's data in isolation.
 
 
 Style guidelines:

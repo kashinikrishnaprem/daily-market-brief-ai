@@ -88,18 +88,15 @@ def fetch_global_data():
         silver_hist = silver.history(period="5d")
         gsec_hist = gsec.history(period="5d")
 
-        if any(len(hist) < 2 for hist in [
-            sp_hist,
-            nas_hist,
-            dow_hist,
-            usd_hist,
-            brent_hist,
-            vix_hist,
-            gold_hist,
-            silver_hist,
-            gsec_hist
-         ]):
-            return "Global data unavailable."
+        print("SP500:", len(sp_hist))
+        print("NASDAQ:", len(nas_hist))
+        print("DOW:", len(dow_hist))
+        print("USDINR:", len(usd_hist))
+        print("BRENT:", len(brent_hist))
+        print("VIX:", len(vix_hist))
+        print("GOLD:", len(gold_hist))
+        print("SILVER:", len(silver_hist))
+        print("GSEC:", len(gsec_hist))
 
         def calc(hist):
             close = hist["Close"].iloc[-1]

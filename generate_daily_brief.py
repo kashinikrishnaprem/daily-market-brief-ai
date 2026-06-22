@@ -76,6 +76,7 @@ def fetch_global_data():
         india_vix = yf.Ticker("^INDIAVIX")
         gold = yf.Ticker("GC=F")
         silver = yf.Ticker("SI=F")
+        # US 10-Year Treasury Yield
         gsec = yf.Ticker("^TNX")
 
         sp_hist = sp500.history(period="5d")
@@ -87,16 +88,6 @@ def fetch_global_data():
         gold_hist = gold.history(period="5d")
         silver_hist = silver.history(period="5d")
         gsec_hist = gsec.history(period="5d")
-
-        print("SP500:", len(sp_hist))
-        print("NASDAQ:", len(nas_hist))
-        print("DOW:", len(dow_hist))
-        print("USDINR:", len(usd_hist))
-        print("BRENT:", len(brent_hist))
-        print("VIX:", len(vix_hist))
-        print("GOLD:", len(gold_hist))
-        print("SILVER:", len(silver_hist))
-        print("GSEC:", len(gsec_hist))
 
         def calc(hist):
             close = hist["Close"].iloc[-1]
@@ -122,7 +113,7 @@ DOW JONES: {dow_close:.2f} ({dow_pts:+.2f}, {dow_pct:.2f}%)
 USD/INR: {usd_close:.2f} ({usd_pts:+.2f}, {usd_pct:.2f}%)
 BRENT CRUDE: {brent_close:.2f} ({brent_pts:+.2f}, {brent_pct:.2f}%)
 INDIA VIX: {vix_close:.2f} ({vix_pts:+.2f}, {vix_pct:.2f}%)
-10Y G-SEC YIELD: {gsec_close:.2f} ({gsec_pts:+.2f}, {gsec_pct:.2f}%)
+US 10Y TREASURY YIELD: {gsec_close:.2f} ({gsec_pts:+.2f}, {gsec_pct:.2f}%)
 GOLD: {gold_close:.2f} ({gold_pts:+.2f}, {gold_pct:.2f}%)
 SILVER: {silver_close:.2f} ({silver_pts:+.2f}, {silver_pct:.2f}%)
 """

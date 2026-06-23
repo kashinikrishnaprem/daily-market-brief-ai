@@ -605,6 +605,10 @@ print("DATE:", today)
 print("===================================")
 print(ai_output)
 
+def update_Indicator_history():
+
+    print("Indicator history function loaded")
+
 # ---------------- WRITE TO GOOGLE SHEETS ----------------
 def update_google_sheet(date, market_data, global_data, flows, news, brief):
 
@@ -682,3 +686,4 @@ update_google_sheet(
     news_data,
     ai_output
 ) 
+update_Indicator_history()

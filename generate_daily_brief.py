@@ -605,9 +605,30 @@ print("DATE:", today)
 print("===================================")
 print(ai_output)
 
-def update_Indicator_history():
+def update_indicator_history():
 
-    print("Indicator history function loaded")
+    creds_json = os.getenv("GOOGLE_SERVICE_ACCOUNT")
+    creds_dict = json.loads(creds_json)
+
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+
+    creds = Credentials.from_service_account_info(
+        creds_dict,
+        scopes=scopes
+    )
+
+    client = gspread.authorize(creds)
+
+    spreadsheet = client.open_by_key(
+        "1vSuZmhAYVgBhTz4nx9g_fZnmV2ulEUJwisjIWfoQK64"
+    )
+
+    sheet = spreadsheet.worksheet("Indicator_History")
+
+    print("Connected to Indicator_History")
 
 # ---------------- WRITE TO GOOGLE SHEETS ----------------
 def update_google_sheet(date, market_data, global_data, flows, news, brief):

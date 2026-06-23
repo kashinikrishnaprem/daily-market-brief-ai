@@ -59,16 +59,21 @@ def fetch_market_data():
         else:
            regime = "High Volatility Session"
         return {
-"trade_date": trade_date_str,
-"data": f"""
-Trade Date: {trade_date}
-Session Type: {regime}
+            "trade_date": trade_date_str,
 
-NIFTY 50: {nifty_close:.2f} ({nifty_points:+.2f}, {nifty_change:.2f}%)
-BANK NIFTY: {bank_close:.2f} ({bank_points:+.2f}, {bank_change:.2f}%)
-SENSEX: {sensex_close:.2f} ({sensex_points:+.2f}, {sensex_change:.2f}%)
-"""
-}
+            "nifty": round(nifty_close, 2),
+            "bank_nifty": round(bank_close, 2),
+            "sensex": round(sensex_close, 2),
+
+            "data": f"""
+        Trade Date: {trade_date}
+        Session Type: {regime}
+
+        NIFTY 50: {nifty_close:.2f} ({nifty_points:+.2f}, {nifty_change:.2f}%)
+        BANK NIFTY: {bank_close:.2f} ({bank_points:+.2f}, {bank_change:.2f}%)
+        SENSEX: {sensex_close:.2f} ({sensex_points:+.2f}, {sensex_change:.2f}%)
+        """
+        }
 
     except Exception:
 
@@ -423,6 +428,12 @@ market_result = fetch_market_data()
 
 market_data = market_result["data"]
 trade_date = market_result["trade_date"]
+nifty_value = market_result["nifty"]
+bank_nifty_value = market_result["bank_nifty"]
+sensex_value = market_result["sensex"]
+print("NIFTY:", nifty_value)
+print("BANK NIFTY:", bank_nifty_value)
+print("SENSEX:", sensex_value)
 print("MARKET SESSION DATE:", trade_date)
 news_data = fetch_market_news()
 global_data = fetch_global_data()

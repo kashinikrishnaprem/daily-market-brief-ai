@@ -631,27 +631,48 @@ def update_Indicator_history():
 
     print("Rows in Indicator_History:", len(all_rows))
 
+    row_to_update = None
+
+    for idx, row in enumerate(all_rows, start=1):
+
+        if len(row) > 0 and row[0] == today:
+            row_to_update = idx
+            break
+
+    print("Indicator Row:", row_to_update)
+
     new_row = [
-    today,
-    "TEST",
-    "TEST",
-    "TEST",
-    "TEST",
-    "TEST",
-    "TEST",
-    "TEST",
-    "TEST",
-    "TEST",
-    "TEST",
-    "TEST"
+        today,
+        "TEST",
+        "TEST",
+        "TEST",
+        "TEST",
+        "TEST",
+        "TEST",
+        "TEST",
+        "TEST",
+        "TEST",
+        "TEST",
+        "TEST"
     ]
 
-    sheet.append_row(
-        new_row,
-        value_input_option="RAW"
-    )
+    if row_to_update:
 
-    print("TEST ROW ADDED")
+        sheet.update(
+            f"A{row_to_update}:L{row_to_update}",
+            [new_row]
+        )
+
+        print("Updated Indicator Row")
+
+    else:
+
+        sheet.append_row(
+            new_row,
+            value_input_option="RAW"
+        )
+
+        print("Added Indicator Row")
 
 # ---------------- WRITE TO GOOGLE SHEETS ----------------
 def update_google_sheet(date, market_data, global_data, flows, news, brief):

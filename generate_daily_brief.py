@@ -627,8 +627,31 @@ def update_Indicator_history():
     )
 
     sheet = spreadsheet.worksheet("Indicator_History")
+    all_rows = sheet.get_all_values()
 
-    print("Connected to Indicator_History")
+    print("Rows in Indicator_History:", len(all_rows))
+
+    new_row = [
+    today,
+    "TEST",
+    "TEST",
+    "TEST",
+    "TEST",
+    "TEST",
+    "TEST",
+    "TEST",
+    "TEST",
+    "TEST",
+    "TEST",
+    "TEST"
+    ]
+
+    sheet.append_row(
+        new_row,
+        value_input_option="RAW"
+    )
+
+    print("TEST ROW ADDED")
 
 # ---------------- WRITE TO GOOGLE SHEETS ----------------
 def update_google_sheet(date, market_data, global_data, flows, news, brief):

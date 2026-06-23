@@ -27,7 +27,10 @@ def fetch_market_data():
         sensex_hist = sensex.history(period="5d")
 
         if len(nifty_hist) < 2 or len(bank_hist) < 2 or len(sensex_hist) < 2:
-            return "Market data unavailable."
+            return {
+                "trade_date": "Unknown",
+                "data": "Market data unavailable."
+            }
 
         nifty_close = nifty_hist["Close"].iloc[-1]
         bank_close = bank_hist["Close"].iloc[-1]
@@ -46,6 +49,7 @@ def fetch_market_data():
         sensex_change = (sensex_points / sensex_prev) * 100
 
         trade_date = nifty_hist.index[-1].strftime("%d %b %Y")
+        trade_date_str = trade_date
         max_move = max(abs(nifty_change), abs(bank_change), abs(sensex_change))
 
         if max_move < 0.5:
@@ -54,7 +58,9 @@ def fetch_market_data():
            regime = "Moderate Volatility Session"
         else:
            regime = "High Volatility Session"
-        return f"""
+        return {
+"trade_date": trade_date_str,
+"data": f"""
 Trade Date: {trade_date}
 Session Type: {regime}
 
@@ -62,9 +68,14 @@ NIFTY 50: {nifty_close:.2f} ({nifty_points:+.2f}, {nifty_change:.2f}%)
 BANK NIFTY: {bank_close:.2f} ({bank_points:+.2f}, {bank_change:.2f}%)
 SENSEX: {sensex_close:.2f} ({sensex_points:+.2f}, {sensex_change:.2f}%)
 """
+}
 
     except Exception:
-        return "Market data unavailable."
+
+        return {
+            "trade_date": "Unknown",
+            "data": "Market data unavailable."
+        }
 # ---------------- FETCH GLOBAL MARKET DATA ----------------
 def fetch_global_data():
     try:
@@ -228,7 +239,6 @@ def fetch_market_news():
         "rupee",
         "economy",
         "gdp",
-        "sebi",
         "treasury yield",
         "bond yield"
 ]
@@ -409,7 +419,11 @@ FLOWS:
         return f"Historical data unavailable: {str(e)}"
         
 # ---------------- LIVE DATA VARIABLES ----------------
-market_data = fetch_market_data()
+market_result = fetch_market_data()
+
+market_data = market_result["data"]
+trade_date = market_result["trade_date"]
+print("MARKET SESSION DATE:", trade_date)
 news_data = fetch_market_news()
 global_data = fetch_global_data()
 
@@ -448,8 +462,11 @@ Avoid generic statements. Focus on **drivers and context**.
 
 If FII/DII flows are not available, explicitly state that they were not reported and avoid inferring institutional behaviour.
 
-DATE:
+REPORT DATE:
 {today}
+
+MARKET SESSION DATE:
+{trade_date}
 
 DOMESTIC MARKET DATA:
 {market_data}

@@ -605,7 +605,7 @@ print("DATE:", today)
 print("===================================")
 print(ai_output)
 
-def update_indicator_history():
+def update_Indicator_history():
 
     creds_json = os.getenv("GOOGLE_SERVICE_ACCOUNT")
     creds_dict = json.loads(creds_json)

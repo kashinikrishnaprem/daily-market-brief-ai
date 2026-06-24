@@ -694,7 +694,7 @@ def update_Indicator_history():
     print("Indicator Row:", row_to_update)
 
     new_row = [
-        today,
+        trade_date,
         nifty_value,
         bank_nifty_value,
         sensex_value,

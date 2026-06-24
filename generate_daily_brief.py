@@ -487,6 +487,21 @@ DII Net Flow: Not Available
 print("----- DEBUG FLOWS -----")
 print(fii_dii_data)
 print("-----------------------")
+fii_match = re.search(r"FII Net Flow: ₹([-\d,.]+)", fii_dii_data)
+dii_match = re.search(r"DII Net Flow: ₹([-\d,.]+)", fii_dii_data)
+
+if fii_match:
+    fii_value = float(fii_match.group(1).replace(",", ""))
+else:
+    fii_value = 0
+
+if dii_match:
+    dii_value = float(dii_match.group(1).replace(",", ""))
+else:
+    dii_value = 0
+
+print("FII VALUE:", fii_value)
+print("DII VALUE:", dii_value)
 # ---------------- ANALYSIS INPUT ----------------
 analysis_input = f"""
 You are a professional equity market strategist writing a concise daily market brief.
@@ -680,17 +695,17 @@ def update_Indicator_history():
 
     new_row = [
         today,
-        "TEST",
-        "TEST",
-        "TEST",
-        "TEST",
-        "TEST",
-        "TEST",
-        "TEST",
-        "TEST",
-        "TEST",
-        "TEST",
-        "TEST"
+        nifty_value,
+        bank_nifty_value,
+        sensex_value,
+        fii_value,
+        dii_value,
+        vix_value,
+        brent_value,
+        usdinr_value,
+        us10y_value,
+        gold_value,
+        silver_value
     ]
 
     if row_to_update:

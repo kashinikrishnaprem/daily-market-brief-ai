@@ -445,17 +445,7 @@ print("NIFTY:", nifty_value)
 print("BANK NIFTY:", bank_nifty_value)
 print("SENSEX:", sensex_value)
 print("MARKET SESSION DATE:", trade_date)
-fii_date_match = re.search(r"Date:\s*([^\n]+)", fii_dii_data)
 
-if fii_date_match:
-    fii_date = fii_date_match.group(1).strip()
-else:
-    fii_date = "Unknown"
-
-print("MARKET DATE:", trade_date)
-print("FII DATE:", fii_date)
-if trade_date not in fii_date:
-    print("WARNING: MARKET DATE AND FII DATE DO NOT MATCH")
 news_data = fetch_market_news()
 global_result = fetch_global_data()
 
@@ -498,6 +488,17 @@ DII Net Flow: Not Available
 print("----- DEBUG FLOWS -----")
 print(fii_dii_data)
 print("-----------------------")
+fii_date_match = re.search(r"Date:\s*([^\n]+)", fii_dii_data)
+
+if fii_date_match:
+    fii_date = fii_date_match.group(1).strip()
+else:
+    fii_date = "Unknown"
+
+print("MARKET DATE:", trade_date)
+print("FII DATE:", fii_date)
+if trade_date not in fii_date:
+    print("WARNING: MARKET DATE AND FII DATE DO NOT MATCH")
 fii_match = re.search(r"FII Net Flow: ₹([-\d,.]+)", fii_dii_data)
 dii_match = re.search(r"DII Net Flow: ₹([-\d,.]+)", fii_dii_data)
 

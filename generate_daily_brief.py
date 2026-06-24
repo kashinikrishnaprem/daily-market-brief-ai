@@ -445,6 +445,17 @@ print("NIFTY:", nifty_value)
 print("BANK NIFTY:", bank_nifty_value)
 print("SENSEX:", sensex_value)
 print("MARKET SESSION DATE:", trade_date)
+fii_date_match = re.search(r"Date:\s*([^\n]+)", fii_dii_data)
+
+if fii_date_match:
+    fii_date = fii_date_match.group(1).strip()
+else:
+    fii_date = "Unknown"
+
+print("MARKET DATE:", trade_date)
+print("FII DATE:", fii_date)
+if trade_date not in fii_date:
+    print("WARNING: MARKET DATE AND FII DATE DO NOT MATCH")
 news_data = fetch_market_news()
 global_result = fetch_global_data()
 
@@ -687,7 +698,7 @@ def update_Indicator_history():
 
     for idx, row in enumerate(all_rows, start=1):
 
-        if len(row) > 0 and row[0] == today:
+        if len(row) > 0 and row[0] == trade_date:
             row_to_update = idx
             break
 

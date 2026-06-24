@@ -122,17 +122,27 @@ def fetch_global_data():
         silver_close, silver_pts, silver_pct = calc(silver_hist)
         gsec_close, gsec_pts, gsec_pct = calc(gsec_hist)
 
-        return f"""
-S&P 500: {sp_close:.2f} ({sp_pts:+.2f}, {sp_pct:.2f}%)
-NASDAQ: {nas_close:.2f} ({nas_pts:+.2f}, {nas_pct:.2f}%)
-DOW JONES: {dow_close:.2f} ({dow_pts:+.2f}, {dow_pct:.2f}%)
-USD/INR: {usd_close:.2f} ({usd_pts:+.2f}, {usd_pct:.2f}%)
-BRENT CRUDE: {brent_close:.2f} ({brent_pts:+.2f}, {brent_pct:.2f}%)
-INDIA VIX: {vix_close:.2f} ({vix_pts:+.2f}, {vix_pct:.2f}%)
-US 10Y TREASURY YIELD: {gsec_close:.2f} ({gsec_pts:+.2f}, {gsec_pct:.2f}%)
-GOLD: {gold_close:.2f} ({gold_pts:+.2f}, {gold_pct:.2f}%)
-SILVER: {silver_close:.2f} ({silver_pts:+.2f}, {silver_pct:.2f}%)
-"""
+        return {
+
+            "vix": round(vix_close, 2),
+            "brent": round(brent_close, 2),
+            "usdinr": round(usd_close, 2),
+            "us10y": round(gsec_close, 2),
+            "gold": round(gold_close, 2),
+            "silver": round(silver_close, 2),
+
+            "data": f"""
+        S&P 500: {sp_close:.2f} ({sp_pts:+.2f}, {sp_pct:.2f}%)
+        NASDAQ: {nas_close:.2f} ({nas_pts:+.2f}, {nas_pct:.2f}%)
+        DOW JONES: {dow_close:.2f} ({dow_pts:+.2f}, {dow_pct:.2f}%)
+        USD/INR: {usd_close:.2f} ({usd_pts:+.2f}, {usd_pct:.2f}%)
+        BRENT CRUDE: {brent_close:.2f} ({brent_pts:+.2f}, {brent_pct:.2f}%)
+        INDIA VIX: {vix_close:.2f} ({vix_pts:+.2f}, {vix_pct:.2f}%)
+        US 10Y TREASURY YIELD: {gsec_close:.2f} ({gsec_pts:+.2f}, {gsec_pct:.2f}%)
+        GOLD: {gold_close:.2f} ({gold_pts:+.2f}, {gold_pct:.2f}%)
+        SILVER: {silver_close:.2f} ({silver_pts:+.2f}, {silver_pct:.2f}%)
+        """
+        }
     except Exception:
         return "Global data unavailable."
 # ---------------- FETCH FII / DII DATA FROM NSE ----------------
@@ -436,7 +446,23 @@ print("BANK NIFTY:", bank_nifty_value)
 print("SENSEX:", sensex_value)
 print("MARKET SESSION DATE:", trade_date)
 news_data = fetch_market_news()
-global_data = fetch_global_data()
+global_result = fetch_global_data()
+
+global_data = global_result["data"]
+
+vix_value = global_result["vix"]
+brent_value = global_result["brent"]
+usdinr_value = global_result["usdinr"]
+us10y_value = global_result["us10y"]
+gold_value = global_result["gold"]
+silver_value = global_result["silver"]
+
+print("VIX:", vix_value)
+print("BRENT:", brent_value)
+print("USDINR:", usdinr_value)
+print("US10Y:", us10y_value)
+print("GOLD:", gold_value)
+print("SILVER:", silver_value)
 
 historical_data = get_recent_market_history()
 
